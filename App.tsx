@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Utensils, Award, ChevronRight, Settings, Droplets, Plus, Minus, Bell, Moon, Smartphone, Flame, Carrot, Pizza, Apple, CheckCircle2, Lock, Sparkles, LogOut, User as UserIcon, Loader2, Mail, Lock as LockIcon, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Utensils, Award, ChevronRight, Settings, Droplets, Plus, Minus, Bell, Moon, Smartphone, Flame, Carrot, Pizza, Apple, CheckCircle2, Lock, Sparkles, LogOut, User as UserIcon, Loader2, Mail, Lock as LockIcon, Eye, EyeOff, ArrowRight, ScanLine, Activity, Zap } from 'lucide-react';
 import { Button } from './components/Button';
 import { Navigation } from './components/Navigation';
 import { Card } from './components/Card';
@@ -599,36 +599,48 @@ const ProfileView: React.FC<{
 
 const AuthView: React.FC<{ 
   onSuccess: () => void;
+  onSkip: () => void;
   profile: UserProfile;
   setProfile: (p: UserProfile) => void;
-}> = ({ onSuccess, profile, setProfile }) => {
+}> = ({ onSuccess, onSkip, profile, setProfile }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setMessage('');
+
+    const cleanEmail = email.trim();
+    const cleanPassword = password.trim();
+
+    if (!cleanEmail || !cleanPassword) {
+       setError("Please enter both email and password");
+       setLoading(false);
+       return;
+    }
 
     try {
       let authResponse;
       
       if (isLogin) {
         authResponse = await supabase.auth.signInWithPassword({
-          email,
-          password
+          email: cleanEmail,
+          password: cleanPassword
         });
       } else {
         authResponse = await supabase.auth.signUp({
-          email,
-          password,
+          email: cleanEmail,
+          password: cleanPassword,
           options: {
             data: {
-              name: profile.name, // Pass name from onboarding
+              name: profile.name, 
             }
           }
         });
@@ -637,115 +649,180 @@ const AuthView: React.FC<{
       if (authResponse.error) throw authResponse.error;
       
       if (!authResponse.data.session && !isLogin) {
-         // Sign up successful but needs email confirmation (depending on Supabase settings)
-         // For now, assume auto-confirm or just tell user
-         alert('Check your email for confirmation link, or just sign in if auto-confirm is on.');
+         // Sign up successful but needs email confirmation
+         setMessage('Account created! Please check your email to confirm your account before logging in.');
+         // Optionally switch to login tab so they can login after clicking link
+         // setIsLogin(true); 
+      } else {
+         onSuccess();
       }
-      
-      onSuccess();
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Authentication failed');
+      if (err.message) {
+         if (err.message.includes("security purposes") || err.message.includes("too many requests")) {
+            setError("Too many attempts. Please wait or continue as guest.");
+         } else if (err.message.includes("Invalid login credentials")) {
+            setError(isLogin 
+               ? "Incorrect email or password. If you haven't created an account yet, please switch to Sign Up." 
+               : "Invalid credentials. Try a stronger password.");
+         } else {
+            setError(err.message);
+         }
+      } else {
+         setError('Authentication failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black pt-safe px-6 pb-10 flex flex-col transition-colors duration-500">
-      <div className="flex-1 flex flex-col justify-center">
-        <div className="mb-10 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-           <div className="w-20 h-20 bg-gradient-to-tr from-blue-500 to-indigo-600 rounded-3xl mx-auto mb-6 shadow-2xl shadow-blue-500/30 flex items-center justify-center">
-              <Sparkles className="text-white w-10 h-10" />
-           </div>
-           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-             {isLogin ? 'Welcome Back' : 'Create Account'}
-           </h1>
-           <p className="text-gray-500 dark:text-gray-400">
-             {isLogin ? 'Sign in to continue your journey' : 'Join us to start tracking your health'}
-           </p>
-        </div>
-
-        <div className="bg-gray-50 dark:bg-gray-900 p-1.5 rounded-xl flex mb-8 animate-in fade-in slide-in-from-bottom-6 duration-500 delay-100">
-          <button 
-            onClick={() => { setIsLogin(true); setError(''); }}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${isLogin ? 'bg-white dark:bg-gray-800 text-black dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}
-          >
-            Log In
-          </button>
-          <button 
-            onClick={() => { setIsLogin(false); setError(''); }}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${!isLogin ? 'bg-white dark:bg-gray-800 text-black dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}
-          >
-            Sign Up
-          </button>
-        </div>
-
-        <form onSubmit={handleAuth} className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-500 delay-200">
-          {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-xl font-medium text-center">
-              {error}
-            </div>
-          )}
-
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-500 ml-1 uppercase tracking-wide">Email</label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-              <input 
-                type="email" 
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-900 dark:text-white rounded-2xl border-none focus:ring-2 focus:ring-[#007AFF]/50 transition-all font-medium"
-                placeholder="hello@example.com"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-500 ml-1 uppercase tracking-wide">Password</label>
-            <div className="relative">
-              <LockIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-              <input 
-                type={showPassword ? "text" : "password"}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-12 pr-12 py-4 bg-gray-50 dark:bg-gray-900 dark:text-white rounded-2xl border-none focus:ring-2 focus:ring-[#007AFF]/50 transition-all font-medium"
-                placeholder="••••••••"
-                minLength={6}
-              />
-              <button 
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-          </div>
+    <div className="min-h-screen relative overflow-hidden flex flex-col">
+       {/* Ambient Background */}
+       <div className="absolute inset-0 bg-black z-0">
+          <div className="absolute inset-0 bg-gradient-to-b from-indigo-950 via-slate-950 to-black opacity-90"></div>
           
-          <div className="pt-4">
-            <Button 
-              type="submit" 
-              fullWidth 
-              disabled={loading}
-              className="bg-[#007AFF] hover:bg-blue-600 text-white shadow-blue-200 dark:shadow-none h-14 text-lg flex items-center justify-center gap-2"
-            >
-              {loading ? <Loader2 className="animate-spin" /> : (
-                <>
-                  {isLogin ? 'Log In' : 'Create Account'} <ArrowRight size={20} />
-                </>
-              )}
-            </Button>
+          {/* Aurora Effect */}
+          <div className="absolute top-[-20%] left-[-20%] w-[140%] h-[80%] bg-blue-600/20 blur-[100px] animate-aurora rounded-full mix-blend-screen pointer-events-none"></div>
+          <div className="absolute bottom-[-10%] right-[-10%] w-[100%] h-[60%] bg-purple-600/20 blur-[100px] animate-aurora-rev rounded-full mix-blend-screen pointer-events-none"></div>
+
+          {/* 3D Floating Elements */}
+          <div className="absolute inset-0 perspective-1000 z-0 pointer-events-none">
+             <div className="absolute top-[15%] right-[10%] w-24 h-24 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl transform rotate-12 animate-float-3d shadow-2xl flex items-center justify-center">
+                <ScanLine className="text-white/50 w-10 h-10" />
+             </div>
+             <div className="absolute bottom-[20%] left-[10%] w-20 h-20 bg-white/5 backdrop-blur-md border border-white/10 rounded-full transform -rotate-12 animate-float-3d-delayed shadow-2xl flex items-center justify-center">
+                <Activity className="text-green-400/50 w-8 h-8" />
+             </div>
+             <div className="absolute top-[40%] left-[15%] w-12 h-12 bg-white/5 backdrop-blur-md border border-white/10 rounded-xl transform rotate-45 animate-float-3d shadow-xl flex items-center justify-center blur-[1px]">
+                <Zap className="text-yellow-400/50 w-5 h-5" />
+             </div>
           </div>
-        </form>
-      </div>
-      
-      <p className="text-center text-xs text-gray-400">
-        By continuing, you agree to our Terms & Privacy Policy.
-      </p>
+       </div>
+
+       <style>{`
+         @keyframes aurora {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(20px, 40px) scale(1.1); }
+            100% { transform: translate(0, 0) scale(1); }
+         }
+         @keyframes aurora-rev {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-30px, -20px) scale(1.2); }
+            100% { transform: translate(0, 0) scale(1); }
+         }
+         .animate-aurora { animation: aurora 20s infinite ease-in-out; }
+         .animate-aurora-rev { animation: aurora-rev 25s infinite ease-in-out; }
+       `}</style>
+
+       <div className="flex-1 flex flex-col justify-center px-6 z-10 pt-safe pb-10">
+          <div className="mb-8 text-center animate-in fade-in slide-in-from-bottom-8 duration-700">
+             <div className="w-24 h-24 bg-gradient-to-tr from-blue-500/80 to-indigo-600/80 backdrop-blur-xl rounded-[32px] mx-auto mb-8 shadow-[0_0_50px_rgba(0,122,255,0.3)] flex items-center justify-center border border-white/20 transform hover:scale-105 transition-transform duration-500 group">
+                <Sparkles className="text-white w-12 h-12 group-hover:rotate-12 transition-transform duration-500" strokeWidth={1.5} />
+             </div>
+             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60 mb-3 tracking-tight">
+               SnapCalorie<span className="text-blue-400">AI</span>
+             </h1>
+             <p className="text-gray-400 text-lg font-light leading-relaxed max-w-xs mx-auto">
+               Next-generation nutrition tracking. <br/> Just snap and eat.
+             </p>
+          </div>
+
+          {/* Glass Card Form */}
+          <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[32px] p-6 shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-700 delay-100">
+             {/* Toggle */}
+             <div className="bg-black/20 p-1 rounded-2xl flex mb-6 backdrop-blur-md">
+                <button 
+                  onClick={() => { setIsLogin(true); setError(''); setMessage(''); }}
+                  className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${isLogin ? 'bg-white/10 text-white shadow-lg backdrop-blur-sm' : 'text-gray-400 hover:text-white'}`}
+                >
+                  Log In
+                </button>
+                <button 
+                  onClick={() => { setIsLogin(false); setError(''); setMessage(''); }}
+                  className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${!isLogin ? 'bg-white/10 text-white shadow-lg backdrop-blur-sm' : 'text-gray-400 hover:text-white'}`}
+                >
+                  Sign Up
+                </button>
+             </div>
+
+             <form onSubmit={handleAuth} className="space-y-4">
+                {error && (
+                  <div className="p-3 bg-red-500/20 border border-red-500/30 text-red-200 text-sm rounded-xl font-medium text-center backdrop-blur-md">
+                    {error}
+                  </div>
+                )}
+
+                {message && (
+                  <div className="p-3 bg-green-500/20 border border-green-500/30 text-green-200 text-sm rounded-xl font-medium text-center backdrop-blur-md">
+                    {message}
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                   <div className="relative group">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-white transition-colors" size={20} />
+                      <input 
+                        type="email" 
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/5 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all font-medium"
+                        placeholder="Email address"
+                        autoCapitalize="none"
+                        autoComplete="email"
+                        autoCorrect="off"
+                      />
+                   </div>
+
+                   <div className="relative group">
+                      <LockIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-white transition-colors" size={20} />
+                      <input 
+                        type={showPassword ? "text" : "password"}
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full pl-12 pr-12 py-4 bg-white/5 border border-white/5 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all font-medium"
+                        placeholder="Password"
+                        minLength={6}
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                      >
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </button>
+                   </div>
+                </div>
+                
+                <div className="pt-2 space-y-3">
+                  <Button 
+                    type="submit" 
+                    fullWidth 
+                    disabled={loading}
+                    className="bg-white text-black hover:bg-gray-100 border-none h-14 text-lg flex items-center justify-center gap-2 font-bold shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all duration-300"
+                  >
+                    {loading ? <Loader2 className="animate-spin" /> : (
+                      <>
+                        {isLogin ? 'Enter' : 'Create Account'} <ArrowRight size={20} />
+                      </>
+                    )}
+                  </Button>
+                  
+                  <button 
+                     type="button"
+                     onClick={onSkip}
+                     className="w-full py-3 text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                  >
+                     Explore as Guest
+                  </button>
+                </div>
+             </form>
+          </div>
+       </div>
     </div>
   );
 };
@@ -1081,10 +1158,14 @@ const ProgressDashboard: React.FC<{ log: DayLog, profile: UserProfile }> = ({ lo
 
 const App: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile>(INITIAL_PROFILE);
-  const [currentView, setCurrentView] = useState<ViewState>('ONBOARDING');
+  const [currentView, setCurrentView] = useState<ViewState>('AUTH'); // Changed from ONBOARDING
   const [todayLog, setTodayLog] = useState<DayLog>(INITIAL_LOG);
   const [session, setSession] = useState<any>(null);
   const [isDataLoading, setIsDataLoading] = useState(false);
+  const currentViewRef = useRef<ViewState>('AUTH');
+  
+  // Guest Mode
+  const [isGuest, setIsGuest] = useState(false);
   
   // Camera & Analysis State
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -1106,6 +1187,11 @@ const App: React.FC = () => {
       setSession(session);
       if (session) {
         fetchUserData(session.user.id);
+      } else {
+        // If no session, make sure we are on AUTH
+        if (!isGuest && currentViewRef.current !== 'AUTH') {
+            setCurrentView('AUTH');
+        }
       }
     });
 
@@ -1114,14 +1200,22 @@ const App: React.FC = () => {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) {
+         setIsGuest(false);
          fetchUserData(session.user.id);
       } else {
-         setCurrentView('ONBOARDING');
+         if (!isGuest) {
+            setCurrentView('AUTH');
+         }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [isGuest]);
+
+  // Keep ref in sync
+  useEffect(() => {
+     currentViewRef.current = currentView;
+  }, [currentView]);
 
   const fetchUserData = async (userId: string) => {
     setIsDataLoading(true);
@@ -1142,15 +1236,19 @@ const App: React.FC = () => {
             ...(profileData.targets || {})
         });
         
+        // Only redirect if we are not currently in an auth flow or special view
+        // Prevents jumping to Onboarding when we are waiting for Auth to complete
+        const safeViews = ['AUTH', 'PAYWALL', 'DASHBOARD'];
         if (profileData.has_onboarded) {
-          // If already onboarded, go to dashboard (or paywall if logic dictates)
-          setCurrentView(profileData.is_premium ? 'DASHBOARD' : 'PAYWALL');
+          if (!safeViews.includes(currentViewRef.current)) {
+             setCurrentView(profileData.is_premium ? 'DASHBOARD' : 'PAYWALL');
+          }
         } else {
           // User exists but hasn't finished setup
           setCurrentView('ONBOARDING');
         }
       } else {
-        // User is authenticated but no profile exists (shouldn't happen with triggers, but safe fallback)
+        // User is authenticated but no profile exists
         setCurrentView('ONBOARDING');
       }
 
@@ -1198,57 +1296,83 @@ const App: React.FC = () => {
     }
   }, [profile.preferences.darkMode]);
 
-  const handleOnboardingNext = () => {
-    // Calculate final macros before going to Auth
-    const updatedProfile = calculateMacros(profile);
-    setProfile(updatedProfile);
-    setCurrentView('AUTH');
+  const handleGuestContinue = () => {
+     setIsGuest(true);
+     setCurrentView('ONBOARDING');
   };
 
   const handleAuthSuccess = async () => {
-    // The user is now authenticated (session listener will trigger fetchUserData).
-    // However, if it's a new user, we might need to save the onboarded profile data 
-    // that is currently in state to the DB.
-    
     // We'll rely on the session state update to grab the user ID, but we can optimistically set view
     const { data: { session: newSession } } = await supabase.auth.getSession();
     
+    // Even if newSession is null (e.g. pending email verification), we should let the user through to the next screen 
+    // to avoid getting stuck.
+    
     if (newSession?.user?.id) {
-       // Save the profile we built during onboarding
-       const { error } = await supabase.from('profiles').upsert({
-         id: newSession.user.id,
-         name: profile.name,
-         age: profile.age,
-         gender: profile.gender,
-         height: profile.height,
-         weight: profile.weight,
-         goal: profile.goal,
-         activity_level: profile.activityLevel,
-         has_onboarded: true,
-         is_premium: false,
-         targets: {
-            targetCalories: profile.targetCalories,
-            targetProtein: profile.targetProtein,
-            targetCarbs: profile.targetCarbs,
-            targetFat: profile.targetFat,
-            targetFiber: profile.targetFiber,
-            targetSugar: profile.targetSugar,
-            maxSodium: profile.maxSodium,
-            maxCholesterol: profile.maxCholesterol,
-         },
-         preferences: profile.preferences
-       });
+       // Check if this user has already onboarded
+       const { data: profileData } = await supabase
+            .from('profiles')
+            .select('has_onboarded, is_premium')
+            .eq('id', newSession.user.id)
+            .single();
 
-       if (!error) {
-          setProfile(p => ({ ...p, hasOnboarded: true }));
-          setCurrentView('PAYWALL');
+       if (profileData?.has_onboarded) {
+          setProfile(p => ({ ...p, hasOnboarded: true, isPremium: profileData.is_premium }));
+          setCurrentView(profileData.is_premium ? 'DASHBOARD' : 'PAYWALL');
+       } else {
+          // New user or incomplete profile
+          setCurrentView('ONBOARDING');
        }
+    } else {
+       // Fallback for pending sessions
+       setCurrentView('ONBOARDING');
     }
   };
 
+  const handleOnboardingComplete = async () => {
+      // Calculate final macros
+      const updatedProfile = calculateMacros(profile);
+      setProfile({ ...updatedProfile, hasOnboarded: true });
+
+      // Save to Supabase if logged in
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (currentSession?.user?.id) {
+          const { error } = await supabase.from('profiles').upsert({
+             id: currentSession.user.id,
+             name: updatedProfile.name,
+             age: updatedProfile.age,
+             gender: updatedProfile.gender,
+             height: updatedProfile.height,
+             weight: updatedProfile.weight,
+             goal: updatedProfile.goal,
+             activity_level: updatedProfile.activityLevel,
+             has_onboarded: true,
+             is_premium: updatedProfile.isPremium,
+             targets: {
+                targetCalories: updatedProfile.targetCalories,
+                targetProtein: updatedProfile.targetProtein,
+                targetCarbs: updatedProfile.targetCarbs,
+                targetFat: updatedProfile.targetFat,
+                targetFiber: updatedProfile.targetFiber,
+                targetSugar: updatedProfile.targetSugar,
+                maxSodium: updatedProfile.maxSodium,
+                maxCholesterol: updatedProfile.maxCholesterol,
+             },
+             preferences: updatedProfile.preferences
+          });
+           if (error) console.error("Error saving profile:", error);
+      }
+
+      setCurrentView('PAYWALL');
+  };
+
   const handleSubscribe = async () => {
-    if (session?.user?.id) {
-       await supabase.from('profiles').update({ is_premium: true }).eq('id', session.user.id);
+    // Check session again just in case it wasn't available during auth success
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    
+    if (currentSession?.user?.id) {
+       await supabase.from('profiles').update({ is_premium: true }).eq('id', currentSession.user.id);
     }
     setProfile(p => ({ ...p, isPremium: true }));
     setCurrentView('DASHBOARD');
@@ -1287,7 +1411,7 @@ const App: React.FC = () => {
   };
 
   const handleSaveFood = async () => {
-    if (editForm && session?.user?.id) {
+    if (editForm) {
       const time = new Date();
       const hour = time.getHours();
       let mealType: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack' = 'Snack';
@@ -1298,7 +1422,7 @@ const App: React.FC = () => {
 
       const newItem: FoodLogItem = {
         ...editForm,
-        id: 'temp-id', // temporary until refresh
+        id: `temp-${Date.now()}`, 
         timestamp: Date.now(),
         mealType: mealType,
         name: editForm.foodName,
@@ -1318,50 +1442,54 @@ const App: React.FC = () => {
       setAnalysisResult(null);
       setEditForm(null);
 
-      // Save to Supabase
-      const { error } = await supabase.from('food_logs').insert({
-        user_id: session.user.id,
-        date: new Date().toISOString().split('T')[0],
-        meal_type: mealType,
-        name: editForm.foodName,
-        calories: editForm.calories,
-        protein: editForm.protein,
-        carbs: editForm.carbs,
-        fat: editForm.fat,
-        fiber: editForm.fiber,
-        sugar: editForm.sugar,
-        sodium: editForm.sodium,
-        cholesterol: editForm.cholesterol,
-        confidence: editForm.confidence,
-        // image_url: capturedImage // Note: Uploading base64 to DB is bad practice. In production, upload to Supabase Storage and save the URL.
-      });
+      // Save to Supabase (Only if authenticated)
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (currentSession?.user?.id) {
+        const { error } = await supabase.from('food_logs').insert({
+          user_id: currentSession.user.id,
+          date: new Date().toISOString().split('T')[0],
+          meal_type: mealType,
+          name: editForm.foodName,
+          calories: editForm.calories,
+          protein: editForm.protein,
+          carbs: editForm.carbs,
+          fat: editForm.fat,
+          fiber: editForm.fiber,
+          sugar: editForm.sugar,
+          sodium: editForm.sodium,
+          cholesterol: editForm.cholesterol,
+          confidence: editForm.confidence,
+        });
 
-      if (error) console.error("Error saving food:", error);
-      else fetchUserData(session.user.id); // Refresh to get real ID
+        if (error) console.error("Error saving food:", error);
+        else fetchUserData(currentSession.user.id);
+      }
     }
   };
 
   const handleAddWater = async (amount: number) => {
-    if (!session?.user?.id) return;
-
     // Optimistic Update
     setTodayLog(prev => ({ ...prev, waterIntake: (prev.waterIntake || 0) + amount }));
 
-    // Save to Supabase
-    const { error } = await supabase.from('water_logs').insert({
-       user_id: session.user.id,
-       date: new Date().toISOString().split('T')[0],
-       amount: amount
-    });
-    
-    if (error) console.error("Error saving water:", error);
+    // Save to Supabase (Only if authenticated)
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    if (currentSession?.user?.id) {
+      const { error } = await supabase.from('water_logs').insert({
+        user_id: currentSession.user.id,
+        date: new Date().toISOString().split('T')[0],
+        amount: amount
+      });
+      
+      if (error) console.error("Error saving water:", error);
+    }
   };
   
   const handleUpdateProfile = async (newProfile: UserProfile) => {
      const calculated = calculateMacros(newProfile);
      setProfile(calculated);
 
-     if (session?.user?.id) {
+     const { data: { session: currentSession } } = await supabase.auth.getSession();
+     if (currentSession?.user?.id) {
        await supabase.from('profiles').update({
          weight: calculated.weight,
          height: calculated.height,
@@ -1377,15 +1505,16 @@ const App: React.FC = () => {
             maxSodium: calculated.maxSodium,
             maxCholesterol: calculated.maxCholesterol,
          }
-       }).eq('id', session.user.id);
+       }).eq('id', currentSession.user.id);
      }
   };
   
   const handleLogout = async () => {
      await supabase.auth.signOut();
+     setIsGuest(false);
      setProfile(INITIAL_PROFILE);
      setTodayLog(INITIAL_LOG);
-     setCurrentView('ONBOARDING');
+     setCurrentView('AUTH');
   };
 
   // --- Views ---
@@ -1395,11 +1524,11 @@ const App: React.FC = () => {
   }
 
   if (currentView === 'ONBOARDING') {
-    return <OnboardingStep profile={profile} setProfile={setProfile} onComplete={handleOnboardingNext} isLoading={isDataLoading} />;
+    return <OnboardingStep profile={profile} setProfile={setProfile} onComplete={handleOnboardingComplete} isLoading={isDataLoading} />;
   }
 
   if (currentView === 'AUTH') {
-    return <AuthView onSuccess={handleAuthSuccess} profile={profile} setProfile={setProfile} />;
+    return <AuthView onSuccess={handleAuthSuccess} onSkip={handleGuestContinue} profile={profile} setProfile={setProfile} />;
   }
 
   if (currentView === 'PAYWALL') {
