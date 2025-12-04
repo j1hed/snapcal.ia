@@ -1,0 +1,7 @@
+{
+  "name": "SnapCalorie AI",
+  "description": "An intelligent iOS-style calorie tracker that uses Gemini AI to analyze food photos for instant nutritional logging.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
