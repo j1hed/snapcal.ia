@@ -1458,8 +1458,10 @@ const AuthView: React.FC<{
 
                  {/* Logo Area */}
                  <div className="text-center mb-8 relative z-10">
-                    <div className="w-20 h-20 bg-gradient-to-br from-[#007AFF] to-indigo-600 rounded-[28px] mx-auto flex items-center justify-center shadow-lg shadow-blue-500/40 mb-6 animate-float-slow">
-                       <Sparkles className="text-white w-10 h-10" />
+                    <div className="w-20 h-20 bg-gradient-to-br from-[#007AFF] to-indigo-600 rounded-[28px] mx-auto flex items-center justify-center shadow-lg shadow-blue-500/40 mb-6 animate-float-slow relative overflow-hidden group">
+                       <ScanLine className="text-white w-10 h-10 relative z-10" strokeWidth={1.5} />
+                       {/* Scanning Beam Animation */}
+                       <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-transparent via-white/20 to-transparent w-full animate-[scan-vertical_2s_ease-in-out_infinite]"></div>
                     </div>
                     <h1 className="text-4xl font-bold tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-gray-400 drop-shadow-sm">SnapCalorie</h1>
                     <p className="text-blue-200 text-sm font-medium tracking-wide">AI NUTRITION TRACKER</p>
@@ -1544,6 +1546,10 @@ const AuthView: React.FC<{
            .rotate-x-2 { transform: rotateX(2deg); }
            .rotate-y-2 { transform: rotateY(2deg); }
            .perspective-1000 { perspective: 1000px; }
+           @keyframes scan-vertical {
+             0% { transform: translateY(-150%); }
+             100% { transform: translateY(250%); }
+           }
         `}</style>
     </div>
   );
