@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Utensils, Award, ChevronRight, Settings, Droplets, Plus, Minus, Bell, Moon, Smartphone, Flame, Carrot, Pizza, Apple, CheckCircle2, Lock, Sparkles, LogOut, User as UserIcon, Loader2, Mail, Lock as LockIcon, Eye, EyeOff, ArrowRight, ScanLine, Activity, Zap } from 'lucide-react';
+import { Utensils, Award, ChevronRight, Settings, Droplets, Plus, Minus, Bell, Moon, Smartphone, Flame, Carrot, Pizza, Apple, CheckCircle2, Lock, Sparkles, LogOut, User as UserIcon, Loader2, Mail, Lock as LockIcon, Eye, EyeOff, ArrowRight, ScanLine, Activity, Zap, Ruler, Weight, Target, Footprints, Trophy } from 'lucide-react';
 import { Button } from './components/Button';
 import { Navigation } from './components/Navigation';
 import { Card } from './components/Card';
@@ -227,6 +226,14 @@ const MorphingFoodIcon: React.FC = () => {
     </div>
   );
 };
+
+const AuroraBackground: React.FC = () => (
+  <div className="absolute inset-0 bg-black z-0 overflow-hidden">
+    <div className="absolute inset-0 bg-gradient-to-b from-indigo-950 via-slate-950 to-black opacity-90"></div>
+    <div className="absolute top-[-20%] left-[-20%] w-[140%] h-[80%] bg-blue-600/20 blur-[100px] animate-aurora rounded-full mix-blend-screen pointer-events-none"></div>
+    <div className="absolute bottom-[-10%] right-[-10%] w-[100%] h-[60%] bg-purple-600/20 blur-[100px] animate-aurora-rev rounded-full mix-blend-screen pointer-events-none"></div>
+  </div>
+);
 
 // --- Sub-components ---
 
@@ -472,17 +479,32 @@ const Switch: React.FC<{
   );
 };
 
-const ProfileView: React.FC<{ 
+const PremiumProfileView: React.FC<{ 
   profile: UserProfile; 
   onUpdate: (p: UserProfile) => void;
   onLogout: () => void;
 }> = ({ profile, onUpdate, onLogout }) => {
-  const [tempWeight, setTempWeight] = useState(profile.weight);
+  const [timeOfDay, setTimeOfDay] = useState<'morning' | 'afternoon' | 'evening'>('morning');
 
-  const handleWeightChange = (delta: number) => {
-    const newWeight = tempWeight + delta;
-    setTempWeight(newWeight);
-    onUpdate({ ...profile, weight: newWeight });
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) setTimeOfDay('morning');
+    else if (hour >= 12 && hour < 18) setTimeOfDay('afternoon');
+    else setTimeOfDay('evening');
+  }, []);
+
+  const getGradient = () => {
+    switch (timeOfDay) {
+      case 'morning': return 'from-blue-100 to-blue-50 dark:from-blue-900/20 dark:to-blue-900/10';
+      case 'afternoon': return 'from-amber-100 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/10';
+      case 'evening': return 'from-indigo-100 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/10';
+    }
+  };
+
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+
+  const toggleSection = (section: string) => {
+    setExpandedSection(expandedSection === section ? null : section);
   };
 
   const handleTogglePref = (key: keyof typeof profile.preferences) => {
@@ -490,417 +512,222 @@ const ProfileView: React.FC<{
     onUpdate({ ...profile, preferences: newPrefs });
   };
 
+  // Calculations for Donut Chart
+  const totalMacros = profile.targetProtein + profile.targetCarbs + profile.targetFat;
+  const pPct = (profile.targetProtein / totalMacros) * 100;
+  const cPct = (profile.targetCarbs / totalMacros) * 100;
+  const fPct = (profile.targetFat / totalMacros) * 100;
+  const radius = 35;
+  const circumference = 2 * Math.PI * radius;
+  
+  const pDash = (pPct / 100) * circumference;
+  const cDash = (cPct / 100) * circumference;
+  const fDash = (fPct / 100) * circumference;
+
   return (
-    <div className="h-full bg-[#F2F2F7] dark:bg-black overflow-y-auto pb-24 transition-colors duration-500">
-       <div className="bg-[#F2F2F7]/95 dark:bg-black/95 pt-safe px-5 pb-4 sticky top-0 z-40 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50">
-          <h1 className="text-[34px] font-bold text-black dark:text-white tracking-tight mt-2">Profile</h1>
-       </div>
+    <div className="h-full bg-gray-50 dark:bg-black overflow-y-auto pb-24 transition-colors duration-500 font-sans">
+      
+      {/* 1. Hero Header */}
+      <div className={`pt-safe pb-8 px-6 rounded-b-[40px] bg-gradient-to-br ${getGradient()} shadow-sm relative overflow-hidden transition-colors duration-1000`}>
+        {/* Animated Background Elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/40 dark:bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 animate-pulse"></div>
+        
+        <div className="relative z-10 flex flex-col items-center mt-6">
+          <div className="relative group cursor-pointer">
+             <div className="w-28 h-28 rounded-full bg-white dark:bg-gray-800 p-1 shadow-xl">
+               <div className="w-full h-full rounded-full bg-gradient-to-tr from-gray-200 to-gray-100 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center overflow-hidden">
+                 <span className="text-4xl font-serif text-gray-400 dark:text-gray-500">{profile.name ? profile.name[0] : 'U'}</span>
+               </div>
+             </div>
+             {profile.isPremium && (
+               <div className="absolute -top-2 -right-2 bg-gradient-to-br from-yellow-300 to-amber-500 text-white p-2 rounded-full shadow-lg animate-bounce-slow">
+                 <Award size={20} fill="currentColor" />
+               </div>
+             )}
+             <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#007AFF] animate-spin-slow opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+          </div>
 
-       <div className="px-5 mt-4 space-y-6">
+          <h1 className="mt-4 text-3xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">{profile.name || 'Guest User'}</h1>
           
-          {/* User Card */}
-          <div className="flex items-center gap-4 mb-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
-             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center text-2xl font-bold text-gray-500 dark:text-gray-300 shadow-md">
-                {profile.name ? profile.name[0] : 'G'}
-             </div>
-             <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">{profile.name || 'Guest User'}</h2>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#007AFF]/10 text-[#007AFF] dark:bg-[#007AFF]/20 dark:text-[#0A84FF]">
-                   {profile.isPremium ? 'Premium Member' : 'Free Account'}
-                </span>
-             </div>
+          <div className="flex items-center gap-2 mt-2">
+            <span className={`px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase ${profile.isPremium ? 'bg-gradient-to-r from-yellow-100 to-amber-100 text-amber-800 border border-amber-200' : 'bg-gray-200 text-gray-600'}`}>
+              {profile.isPremium ? 'Premium Member' : 'Free Plan'}
+            </span>
+            <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs font-bold border border-orange-200 dark:border-orange-800">
+               <Flame size={12} fill="currentColor" />
+               <span>12 Day Streak</span>
+            </div>
           </div>
+        </div>
+      </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-             <div className="bg-white dark:bg-[#1C1C1E] p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center py-6">
-                <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Weight</span>
-                <div className="flex items-center gap-3">
-                   <button onClick={() => handleWeightChange(-1)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 active:bg-gray-200 dark:active:bg-gray-600 active:scale-90 transition-all">
-                      <Minus size={16} />
-                   </button>
-                   <span className="text-2xl font-bold text-gray-900 dark:text-white w-16 text-center">{tempWeight}</span>
-                   <button onClick={() => handleWeightChange(1)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 active:bg-gray-200 dark:active:bg-gray-600 active:scale-90 transition-all">
-                      <Plus size={16} />
-                   </button>
-                </div>
-                <span className="text-gray-400 text-xs mt-1">kg</span>
-             </div>
-             <div className="bg-white dark:bg-[#1C1C1E] p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center py-6">
-                <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Height</span>
-                <span className="text-2xl font-bold text-gray-900 dark:text-white">{profile.height}</span>
-                <span className="text-gray-400 text-xs mt-1">cm</span>
-             </div>
-          </div>
+      <div className="px-5 mt-6 space-y-8">
+        
+        {/* 2. Health Stats Dashboard */}
+        <div className="grid grid-cols-2 gap-4">
+           {/* Calorie Mastery */}
+           <div className="col-span-1 bg-white dark:bg-[#1C1C1E] p-5 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-100 dark:border-gray-800 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Activity size={40} />
+              </div>
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Consistency</h3>
+              <div className="relative w-20 h-20 mx-auto mb-4">
+                 <svg className="w-full h-full transform -rotate-90">
+                   <circle cx="40" cy="40" r="36" stroke="currentColor" strokeWidth="6" className="text-gray-100 dark:text-gray-800" fill="none" />
+                   <circle cx="40" cy="40" r="36" stroke="#34C759" strokeWidth="6" strokeDasharray={2 * Math.PI * 36} strokeDashoffset={2 * Math.PI * 36 * 0.15} strokeLinecap="round" fill="none" className="transition-all duration-1000 shadow-[0_0_10px_#34C759]" />
+                 </svg>
+                 <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-gray-900 dark:text-white">85%</div>
+              </div>
+              {/* Daily Bars */}
+              <div className="flex justify-between items-end h-8 px-1">
+                 {[40, 70, 50, 90, 85, 30, 80].map((h, i) => (
+                    <div key={i} className="w-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden h-full flex items-end">
+                       <div className="w-full bg-[#34C759] rounded-full transition-all duration-700 delay-100" style={{ height: `${h}%` }}></div>
+                    </div>
+                 ))}
+              </div>
+              <p className="text-center text-xs text-gray-500 mt-2 font-medium">Last 7 Days</p>
+           </div>
 
-          {/* Settings Group */}
-          <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
-             <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider ml-1">Settings</h3>
-             <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-800">
-                <Switch 
+           {/* Nutrient Balance (SVG Donut) */}
+           <div className="col-span-1 bg-white dark:bg-[#1C1C1E] p-5 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-100 dark:border-gray-800 relative overflow-hidden">
+               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Target Split</h3>
+               <div className="relative w-24 h-24 mx-auto mb-2">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 80 80">
+                     <circle cx="40" cy="40" r={radius} fill="none" strokeWidth="8" className="stroke-gray-100 dark:stroke-gray-800" />
+                     {/* Protein */}
+                     <circle cx="40" cy="40" r={radius} fill="none" stroke="#FF2D55" strokeWidth="8" strokeDasharray={`${pDash} ${circumference}`} strokeDashoffset="0" className="transition-all duration-1000 ease-out" />
+                     {/* Carbs */}
+                     <circle cx="40" cy="40" r={radius} fill="none" stroke="#FF9500" strokeWidth="8" strokeDasharray={`${cDash} ${circumference}`} strokeDashoffset={-pDash} className="transition-all duration-1000 ease-out delay-100" />
+                     {/* Fat */}
+                     <circle cx="40" cy="40" r={radius} fill="none" stroke="#007AFF" strokeWidth="8" strokeDasharray={`${fDash} ${circumference}`} strokeDashoffset={-(pDash + cDash)} className="transition-all duration-1000 ease-out delay-200" />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                     <span className="text-[10px] font-bold text-gray-400">TARGET</span>
+                  </div>
+               </div>
+               
+               {/* Legend */}
+               <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                     <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#FF2D55]"></div><span className="text-gray-600 dark:text-gray-300">Protein</span></div>
+                     <span className="font-bold">{Math.round(pPct)}%</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                     <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#FF9500]"></div><span className="text-gray-600 dark:text-gray-300">Carbs</span></div>
+                     <span className="font-bold">{Math.round(cPct)}%</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                     <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#007AFF]"></div><span className="text-gray-600 dark:text-gray-300">Fat</span></div>
+                     <span className="font-bold">{Math.round(fPct)}%</span>
+                  </div>
+               </div>
+           </div>
+        </div>
+
+        {/* 3. Personal Records */}
+        <div className="bg-white dark:bg-[#1C1C1E] rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-100 dark:border-gray-800 overflow-hidden transition-all duration-300">
+           <div 
+             className="p-5 flex justify-between items-center cursor-pointer active:bg-gray-50 dark:active:bg-[#2C2C2E]"
+             onClick={() => toggleSection('records')}
+           >
+              <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center text-yellow-600 dark:text-yellow-400">
+                    <Trophy size={20} />
+                 </div>
+                 <div>
+                    <h3 className="font-bold text-gray-900 dark:text-white text-lg">Personal Records</h3>
+                    <p className="text-xs text-gray-500">3 New Records</p>
+                 </div>
+              </div>
+              <ChevronRight size={20} className={`text-gray-400 transition-transform duration-300 ${expandedSection === 'records' ? 'rotate-90' : ''}`} />
+           </div>
+           
+           {expandedSection === 'records' && (
+              <div className="px-5 pb-5 space-y-3 animate-in slide-in-from-top-2 duration-300">
+                 {[
+                    { title: "Longest Streak", value: "14 Days", icon: "🔥", date: "Oct 12" },
+                    { title: "Most Protein", value: "180g", icon: "💪", date: "Oct 10" },
+                    { title: "Lowest Weight", value: "68kg", icon: "⚖️", date: "Sep 28" }
+                 ].map((rec, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-[#2C2C2E] border border-gray-100 dark:border-gray-700">
+                       <div className="flex items-center gap-3">
+                          <span className="text-xl">{rec.icon}</span>
+                          <div>
+                             <div className="font-semibold text-gray-900 dark:text-white text-sm">{rec.title}</div>
+                             <div className="text-xs text-gray-500">{rec.date}</div>
+                          </div>
+                       </div>
+                       <div className="font-bold text-[#007AFF]">{rec.value}</div>
+                    </div>
+                 ))}
+              </div>
+           )}
+        </div>
+
+        {/* 4. Activity Timeline */}
+        <div>
+           <h3 className="text-lg font-bold font-serif text-gray-900 dark:text-white mb-4 px-1">Activity Feed</h3>
+           <div className="relative pl-4 space-y-6 before:absolute before:left-[23px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gray-200 dark:before:bg-gray-800">
+              {[
+                 { time: "Today, 9:41 AM", title: "Logged Breakfast", subtitle: "Oatmeal & Berries • 340 kcal", icon: <Utensils size={14} className="text-white"/>, color: "bg-[#007AFF]" },
+                 { time: "Yesterday", title: "Goal Reached", subtitle: "Hit Protein Goal (150g)", icon: <Target size={14} className="text-white"/>, color: "bg-[#34C759]" },
+                 { time: "Oct 24", title: "Weight Update", subtitle: "70.5 kg (-0.5kg)", icon: <Weight size={14} className="text-white"/>, color: "bg-[#FF9500]" },
+              ].map((item, i) => (
+                 <div key={i} className="relative pl-8 animate-in slide-in-from-right-4 duration-500" style={{ animationDelay: `${i * 100}ms` }}>
+                    <div className={`absolute left-0 top-1 w-10 h-10 rounded-full ${item.color} flex items-center justify-center border-4 border-gray-50 dark:border-black shadow-sm z-10`}>
+                       {item.icon}
+                    </div>
+                    <div className="bg-white dark:bg-[#1C1C1E] p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                       <div className="text-xs text-gray-400 font-medium mb-1">{item.time}</div>
+                       <div className="font-bold text-gray-900 dark:text-white">{item.title}</div>
+                       <div className="text-sm text-gray-500 dark:text-gray-400">{item.subtitle}</div>
+                    </div>
+                 </div>
+              ))}
+           </div>
+        </div>
+
+        {/* 6. Settings List */}
+        <div className="space-y-4">
+           <h3 className="text-lg font-bold font-serif text-gray-900 dark:text-white px-1">Preferences</h3>
+           <div className="bg-white dark:bg-[#1C1C1E] rounded-[24px] shadow-sm overflow-hidden border border-gray-100 dark:border-gray-800">
+              <Switch 
                   label="Notifications" 
                   checked={profile.preferences?.notifications} 
                   onChange={() => handleTogglePref('notifications')}
                   icon={<Bell size={18} />}
-                  iconBgColor="bg-orange-100 dark:bg-orange-900/30"
-                  iconColor="text-orange-600 dark:text-orange-400"
-                />
-                
-                <Switch 
+                  iconBgColor="bg-red-100 dark:bg-red-900/20"
+                  iconColor="text-red-600 dark:text-red-400"
+              />
+              <Switch 
                   label="Dark Mode" 
                   checked={profile.preferences?.darkMode} 
                   onChange={() => handleTogglePref('darkMode')}
                   icon={<Moon size={18} />}
-                  iconBgColor="bg-purple-100 dark:bg-purple-900/30"
+                  iconBgColor="bg-purple-100 dark:bg-purple-900/20"
                   iconColor="text-purple-600 dark:text-purple-400"
-                />
-
-                <Switch 
-                  label="Sync Health Data" 
+              />
+              <Switch 
+                  label="Apple Health Sync" 
                   checked={profile.preferences?.healthSync} 
                   onChange={() => handleTogglePref('healthSync')}
-                  icon={<Smartphone size={18} />}
-                  iconBgColor="bg-red-100 dark:bg-red-900/30"
-                  iconColor="text-red-600 dark:text-red-400"
-                />
-             </div>
-          </div>
-
-          <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
-             <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider ml-1">Account</h3>
-             <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-800">
-                <div className="p-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 active:bg-gray-50 dark:active:bg-[#2C2C2E] transition-colors cursor-pointer">
-                   <div className="flex items-center gap-3">
-                     <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                       <UserIcon size={18} />
+                  icon={<Activity size={18} />}
+                  iconBgColor="bg-pink-100 dark:bg-pink-900/20"
+                  iconColor="text-pink-600 dark:text-pink-400"
+              />
+              <div onClick={onLogout} className="p-4 flex items-center justify-between active:bg-gray-50 dark:active:bg-[#2C2C2E] cursor-pointer text-red-500">
+                  <div className="flex items-center gap-3">
+                     <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-red-50 dark:bg-red-900/10">
+                        <LogOut size={18} />
                      </div>
-                     <span className="font-medium text-gray-900 dark:text-white">Personal Goals</span>
-                   </div>
-                   <span className="text-gray-400 text-sm">{profile.goal} <ChevronRight size={16} className="inline ml-1" /></span>
-                </div>
-                <div onClick={onLogout} className="p-4 flex items-center justify-between text-red-500 dark:text-red-400 font-medium active:bg-gray-50 dark:active:bg-[#2C2C2E] transition-colors cursor-pointer">
-                   <div className="flex items-center gap-3">
-                     <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/10 flex items-center justify-center">
-                       <LogOut size={18} />
-                     </div>
-                     <span>Sign Out</span>
-                   </div>
-                </div>
-             </div>
-          </div>
-          
-          <div className="text-center text-xs text-gray-400 py-4 animate-in fade-in">
-             Version 1.0.3 • Build 2024
-          </div>
-       </div>
-    </div>
-  );
-};
-
-const AuthView: React.FC<{ 
-  onSuccess: () => void;
-  onSkip: () => void;
-  profile: UserProfile;
-  setProfile: (p: UserProfile) => void;
-}> = ({ onSuccess, onSkip, profile, setProfile }) => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setMessage('');
-
-    const cleanEmail = email.trim();
-    const cleanPassword = password.trim();
-
-    if (!cleanEmail || !cleanPassword) {
-       setError("Please enter both email and password");
-       setLoading(false);
-       return;
-    }
-
-    try {
-      let authResponse;
-      
-      if (isLogin) {
-        authResponse = await supabase.auth.signInWithPassword({
-          email: cleanEmail,
-          password: cleanPassword
-        });
-      } else {
-        authResponse = await supabase.auth.signUp({
-          email: cleanEmail,
-          password: cleanPassword,
-          options: {
-            data: {
-              name: profile.name, 
-            }
-          }
-        });
-      }
-
-      if (authResponse.error) throw authResponse.error;
-      
-      if (!authResponse.data.session && !isLogin) {
-         // Sign up successful but needs email confirmation
-         setMessage('Account created! Please check your email to confirm your account before logging in.');
-         // Optionally switch to login tab so they can login after clicking link
-         // setIsLogin(true); 
-      } else {
-         onSuccess();
-      }
-    } catch (err: any) {
-      console.error(err);
-      if (err.message) {
-         if (err.message.includes("security purposes") || err.message.includes("too many requests")) {
-            setError("Too many attempts. Please wait or continue as guest.");
-         } else if (err.message.includes("Invalid login credentials")) {
-            setError(isLogin 
-               ? "Incorrect email or password. If you haven't created an account yet, please switch to Sign Up." 
-               : "Invalid credentials. Try a stronger password.");
-         } else {
-            setError(err.message);
-         }
-      } else {
-         setError('Authentication failed. Please try again.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen relative overflow-hidden flex flex-col">
-       {/* Ambient Background */}
-       <div className="absolute inset-0 bg-black z-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-indigo-950 via-slate-950 to-black opacity-90"></div>
-          
-          {/* Aurora Effect */}
-          <div className="absolute top-[-20%] left-[-20%] w-[140%] h-[80%] bg-blue-600/20 blur-[100px] animate-aurora rounded-full mix-blend-screen pointer-events-none"></div>
-          <div className="absolute bottom-[-10%] right-[-10%] w-[100%] h-[60%] bg-purple-600/20 blur-[100px] animate-aurora-rev rounded-full mix-blend-screen pointer-events-none"></div>
-
-          {/* 3D Floating Elements */}
-          <div className="absolute inset-0 perspective-1000 z-0 pointer-events-none">
-             <div className="absolute top-[15%] right-[10%] w-24 h-24 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl transform rotate-12 animate-float-3d shadow-2xl flex items-center justify-center">
-                <ScanLine className="text-white/50 w-10 h-10" />
-             </div>
-             <div className="absolute bottom-[20%] left-[10%] w-20 h-20 bg-white/5 backdrop-blur-md border border-white/10 rounded-full transform -rotate-12 animate-float-3d-delayed shadow-2xl flex items-center justify-center">
-                <Activity className="text-green-400/50 w-8 h-8" />
-             </div>
-             <div className="absolute top-[40%] left-[15%] w-12 h-12 bg-white/5 backdrop-blur-md border border-white/10 rounded-xl transform rotate-45 animate-float-3d shadow-xl flex items-center justify-center blur-[1px]">
-                <Zap className="text-yellow-400/50 w-5 h-5" />
-             </div>
-          </div>
-       </div>
-
-       <style>{`
-         @keyframes aurora {
-            0% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(20px, 40px) scale(1.1); }
-            100% { transform: translate(0, 0) scale(1); }
-         }
-         @keyframes aurora-rev {
-            0% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(-30px, -20px) scale(1.2); }
-            100% { transform: translate(0, 0) scale(1); }
-         }
-         .animate-aurora { animation: aurora 20s infinite ease-in-out; }
-         .animate-aurora-rev { animation: aurora-rev 25s infinite ease-in-out; }
-       `}</style>
-
-       <div className="flex-1 flex flex-col justify-center px-6 z-10 pt-safe pb-10">
-          <div className="mb-8 text-center animate-in fade-in slide-in-from-bottom-8 duration-700">
-             <div className="w-24 h-24 bg-gradient-to-tr from-blue-500/80 to-indigo-600/80 backdrop-blur-xl rounded-[32px] mx-auto mb-8 shadow-[0_0_50px_rgba(0,122,255,0.3)] flex items-center justify-center border border-white/20 transform hover:scale-105 transition-transform duration-500 group">
-                <Sparkles className="text-white w-12 h-12 group-hover:rotate-12 transition-transform duration-500" strokeWidth={1.5} />
-             </div>
-             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60 mb-3 tracking-tight">
-               SnapCalorie<span className="text-blue-400">AI</span>
-             </h1>
-             <p className="text-gray-400 text-lg font-light leading-relaxed max-w-xs mx-auto">
-               Next-generation nutrition tracking. <br/> Just snap and eat.
-             </p>
-          </div>
-
-          {/* Glass Card Form */}
-          <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[32px] p-6 shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-700 delay-100">
-             {/* Toggle */}
-             <div className="bg-black/20 p-1 rounded-2xl flex mb-6 backdrop-blur-md">
-                <button 
-                  onClick={() => { setIsLogin(true); setError(''); setMessage(''); }}
-                  className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${isLogin ? 'bg-white/10 text-white shadow-lg backdrop-blur-sm' : 'text-gray-400 hover:text-white'}`}
-                >
-                  Log In
-                </button>
-                <button 
-                  onClick={() => { setIsLogin(false); setError(''); setMessage(''); }}
-                  className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${!isLogin ? 'bg-white/10 text-white shadow-lg backdrop-blur-sm' : 'text-gray-400 hover:text-white'}`}
-                >
-                  Sign Up
-                </button>
-             </div>
-
-             <form onSubmit={handleAuth} className="space-y-4">
-                {error && (
-                  <div className="p-3 bg-red-500/20 border border-red-500/30 text-red-200 text-sm rounded-xl font-medium text-center backdrop-blur-md">
-                    {error}
+                     <span className="font-medium">Sign Out</span>
                   </div>
-                )}
-
-                {message && (
-                  <div className="p-3 bg-green-500/20 border border-green-500/30 text-green-200 text-sm rounded-xl font-medium text-center backdrop-blur-md">
-                    {message}
-                  </div>
-                )}
-
-                <div className="space-y-4">
-                   <div className="relative group">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-white transition-colors" size={20} />
-                      <input 
-                        type="email" 
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/5 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all font-medium"
-                        placeholder="Email address"
-                        autoCapitalize="none"
-                        autoComplete="email"
-                        autoCorrect="off"
-                      />
-                   </div>
-
-                   <div className="relative group">
-                      <LockIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-white transition-colors" size={20} />
-                      <input 
-                        type={showPassword ? "text" : "password"}
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-12 pr-12 py-4 bg-white/5 border border-white/5 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all font-medium"
-                        placeholder="Password"
-                        minLength={6}
-                        autoCapitalize="none"
-                        autoCorrect="off"
-                      />
-                      <button 
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                      >
-                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                      </button>
-                   </div>
-                </div>
-                
-                <div className="pt-2 space-y-3">
-                  <Button 
-                    type="submit" 
-                    fullWidth 
-                    disabled={loading}
-                    className="bg-white text-black hover:bg-gray-100 border-none h-14 text-lg flex items-center justify-center gap-2 font-bold shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all duration-300"
-                  >
-                    {loading ? <Loader2 className="animate-spin" /> : (
-                      <>
-                        {isLogin ? 'Enter' : 'Create Account'} <ArrowRight size={20} />
-                      </>
-                    )}
-                  </Button>
-                  
-                  <button 
-                     type="button"
-                     onClick={onSkip}
-                     className="w-full py-3 text-sm font-medium text-gray-400 hover:text-white transition-colors"
-                  >
-                     Explore as Guest
-                  </button>
-                </div>
-             </form>
-          </div>
-       </div>
-    </div>
-  );
-};
-
-const ProcessingView: React.FC<{ image: string | null }> = ({ image }) => {
-  const [progress, setProgress] = useState(0);
-  const [stage, setStage] = useState("Scanning...");
-
-  useEffect(() => {
-    const stages = [
-      "Scanning...",
-      "Identifying foods...",
-      "Calculating macros...",
-      "Finalizing..."
-    ];
-    
-    const timer = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 98) return prev;
-        const remaining = 100 - prev;
-        const jump = Math.max(0.2, remaining * 0.04); 
-        return Math.min(98, prev + jump);
-      });
-    }, 80);
-
-    const stageCheck = setInterval(() => {
-      setProgress(current => {
-        if (current < 30) setStage(stages[0]);
-        else if (current < 60) setStage(stages[1]);
-        else if (current < 85) setStage(stages[2]);
-        else setStage(stages[3]);
-        return current;
-      });
-    }, 100);
-
-    return () => {
-      clearInterval(timer);
-      clearInterval(stageCheck);
-    };
-  }, []);
-
-  return (
-    <div className="fixed inset-0 bg-black flex flex-col z-[60]">
-        {image && (
-          <div className="absolute inset-0 opacity-40">
-             <img src={image} className="w-full h-full object-cover blur-md scale-105" alt="Background" />
-          </div>
-        )}
-        
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-8">
-            <div className="relative w-72 h-72 rounded-[40px] overflow-hidden shadow-2xl border border-white/10 bg-gray-900 mb-12">
-               {image && <img src={image} className="w-full h-full object-cover" alt="Analyzing" />}
-               
-               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#007AFF]/20 to-transparent animate-pulse" />
-               <div className="absolute top-0 w-full h-1 bg-[#007AFF] shadow-[0_0_30px_#007AFF] scan-line" />
-            </div>
-
-            <div className="w-full max-w-xs space-y-4">
-               <div className="flex justify-between items-baseline px-1">
-                 <h2 className="text-2xl font-bold text-white tracking-tight">{stage}</h2>
-                 <span className="text-[#007AFF] font-mono font-bold">{Math.floor(progress)}%</span>
-               </div>
-               
-               <LiquidProgressBar progress={progress} />
-            </div>
+              </div>
+           </div>
         </div>
-        
-        <style>{`
-          .scan-line {
-            animation: scan 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-          }
-          @keyframes scan {
-            0% { top: -10%; opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { top: 110%; opacity: 0; }
-          }
-        `}</style>
+
+      </div>
     </div>
   );
 };
@@ -923,118 +750,171 @@ const OnboardingStep: React.FC<{
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black pt-safe px-6 pb-10 flex flex-col justify-between transition-colors duration-500">
-      <div className="mt-10">
+    <div className="min-h-screen relative overflow-hidden flex flex-col justify-between pt-safe pb-10">
+      <AuroraBackground />
+      
+      <div className="relative z-10 flex-1 px-6 flex flex-col mt-4">
+        {/* Progress */}
         <div className="flex gap-2 mb-10">
           {[0, 1, 2, 3].map(i => (
-             <div key={i} className="flex-1 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+             <div key={i} className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm">
                 <div 
-                  className={`h-full bg-[#007AFF] transition-all duration-500 ${i <= step ? 'w-full' : 'w-0'}`}
+                  className={`h-full bg-[#007AFF] shadow-[0_0_10px_#007AFF] transition-all duration-500 ease-out ${i <= step ? 'w-full' : 'w-0'}`}
                 />
              </div>
           ))}
         </div>
 
-        <div className="space-y-2 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-           <span className="text-[#007AFF] font-semibold text-sm tracking-wide uppercase">Step {step + 1} of 4</span>
-           <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight">
+        {/* Header */}
+        <div className="space-y-2 mb-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+           <span className="text-[#007AFF] font-bold text-xs tracking-widest uppercase glow-text">Step {step + 1} / 4</span>
+           <h1 className="text-4xl font-bold text-white tracking-tight leading-tight drop-shadow-lg">
              {step === 0 && "Tell us about yourself"}
-             {step === 1 && "Your measurements"}
-             {step === 2 && "What is your main goal?"}
-             {step === 3 && "How active are you?"}
+             {step === 1 && "Your body stats"}
+             {step === 2 && "Main goal?"}
+             {step === 3 && "Activity level"}
            </h1>
         </div>
 
-        {step === 0 && (
-          <div className="space-y-6">
-            <div className="bg-gray-50 dark:bg-gray-900 p-1 rounded-xl flex">
-              {Object.values(Gender).map(g => (
+        {/* Content Container */}
+        <div className="flex-1">
+          {step === 0 && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+               {/* Gender */}
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-1.5 rounded-2xl flex shadow-xl">
+                {Object.values(Gender).map(g => (
+                  <button 
+                    key={g}
+                    onClick={() => update('gender', g)}
+                    className={`flex-1 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 ${profile.gender === g ? 'bg-white/20 text-white shadow-lg backdrop-blur-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+
+              {/* Name Input */}
+              <div className="space-y-2">
+                 <label className="text-gray-400 text-xs font-bold uppercase tracking-wider ml-1">First Name</label>
+                 <div className="relative group">
+                    <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-white transition-colors" size={20} />
+                    <input 
+                      type="text" 
+                      value={profile.name} 
+                      onChange={(e) => update('name', e.target.value)}
+                      placeholder="Your Name"
+                      className="w-full pl-12 pr-4 py-5 bg-white/5 border border-white/10 rounded-2xl text-xl text-white font-semibold focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all placeholder-gray-600"
+                    />
+                 </div>
+              </div>
+
+              {/* Age Input */}
+              <div className="space-y-2">
+                 <label className="text-gray-400 text-xs font-bold uppercase tracking-wider ml-1">Age</label>
+                 <div className="relative group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-white transition-colors font-bold text-lg">#</div>
+                    <input 
+                      type="number" 
+                      value={profile.age} 
+                      onChange={(e) => update('age', parseInt(e.target.value))}
+                      className="w-full pl-12 pr-4 py-5 bg-white/5 border border-white/10 rounded-2xl text-xl text-white font-semibold focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all placeholder-gray-600"
+                    />
+                 </div>
+              </div>
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+               {/* Height */}
+               <div className="space-y-2">
+                 <label className="text-gray-400 text-xs font-bold uppercase tracking-wider ml-1">Height (cm)</label>
+                 <div className="relative group">
+                    <Ruler className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-white transition-colors" size={20} />
+                    <input 
+                      type="number" 
+                      value={profile.height} 
+                      onChange={(e) => update('height', parseInt(e.target.value))}
+                      className="w-full pl-12 pr-4 py-5 bg-white/5 border border-white/10 rounded-2xl text-3xl text-white font-bold focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all text-center"
+                    />
+                 </div>
+               </div>
+
+               {/* Weight */}
+               <div className="space-y-2">
+                 <label className="text-gray-400 text-xs font-bold uppercase tracking-wider ml-1">Weight (kg)</label>
+                 <div className="relative group">
+                    <Weight className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-white transition-colors" size={20} />
+                    <input 
+                      type="number" 
+                      value={profile.weight} 
+                      onChange={(e) => update('weight', parseInt(e.target.value))}
+                      className="w-full pl-12 pr-4 py-5 bg-white/5 border border-white/10 rounded-2xl text-3xl text-white font-bold focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all text-center"
+                    />
+                 </div>
+               </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-500">
+              {Object.values(Goal).map((g, idx) => (
                 <button 
                   key={g}
-                  onClick={() => update('gender', g)}
-                  className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${profile.gender === g ? 'bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}
+                  onClick={() => update('goal', g)}
+                  className={`w-full text-left p-6 rounded-3xl border transition-all duration-300 transform active:scale-95 group relative overflow-hidden ${profile.goal === g ? 'bg-gradient-to-r from-blue-600/30 to-blue-400/10 border-blue-500/50 shadow-[0_0_30px_rgba(0,122,255,0.2)]' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
                 >
-                  {g}
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 text-2xl shadow-inner ${profile.goal === g ? 'bg-blue-500 text-white' : 'bg-white/10 text-gray-400'}`}>
+                     {idx === 0 ? '🔥' : idx === 1 ? '⚖️' : '💪'}
+                  </div>
+                  <span className={`text-xl font-bold block ${profile.goal === g ? 'text-white' : 'text-gray-400 group-hover:text-white'}`}>{g}</span>
+                  <p className="text-gray-500 text-sm mt-1">
+                     {idx === 0 ? 'Burn fat & get lean' : idx === 1 ? 'Stay healthy & fit' : 'Build strength & size'}
+                  </p>
+                  {profile.goal === g && (
+                     <div className="absolute top-6 right-6 text-blue-400 animate-in zoom-in duration-300">
+                        <CheckCircle2 size={24} fill="currentColor" className="text-white" />
+                     </div>
+                  )}
                 </button>
               ))}
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-2 pl-1">Age</label>
-              <input 
-                type="number" 
-                value={profile.age} 
-                onChange={(e) => update('age', parseInt(e.target.value))}
-                className="w-full p-4 bg-gray-50 dark:bg-gray-900 dark:text-white rounded-2xl text-xl font-semibold border-none focus:ring-0 text-center"
-              />
+          )}
+
+          {step === 3 && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-500">
+              {Object.values(ActivityLevel).map((l, idx) => (
+                <button 
+                  key={l}
+                  onClick={() => update('activityLevel', l)}
+                  className={`w-full flex items-center gap-4 p-5 rounded-3xl border transition-all duration-300 transform active:scale-95 ${profile.activityLevel === l ? 'bg-gradient-to-r from-blue-600/30 to-blue-400/10 border-blue-500/50 shadow-[0_0_30px_rgba(0,122,255,0.2)]' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
+                >
+                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-inner shrink-0 ${profile.activityLevel === l ? 'bg-blue-500 text-white' : 'bg-white/10 text-gray-400'}`}>
+                      {idx === 0 ? '🪑' : idx === 1 ? '🚶' : idx === 2 ? '🏃' : '⚡️'}
+                   </div>
+                   <div className="text-left">
+                     <span className={`text-lg font-bold block ${profile.activityLevel === l ? 'text-white' : 'text-gray-400'}`}>{l}</span>
+                     <span className="text-xs text-gray-500">
+                        {idx === 0 ? 'Little to no exercise' : idx === 1 ? 'Light exercise 1-3 days/wk' : idx === 2 ? 'Moderate exercise 3-5 days/wk' : 'Hard exercise 6-7 days/wk'}
+                     </span>
+                   </div>
+                </button>
+              ))}
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-2 pl-1">Name</label>
-              <input 
-                type="text" 
-                value={profile.name} 
-                onChange={(e) => update('name', e.target.value)}
-                placeholder="Your Name"
-                className="w-full p-4 bg-gray-50 dark:bg-gray-900 dark:text-white rounded-2xl text-xl font-semibold border-none focus:ring-0 text-center"
-              />
-            </div>
-          </div>
-        )}
-
-        {step === 1 && (
-          <div className="space-y-6">
-             <div>
-                <label className="block text-sm font-medium text-gray-500 mb-2 pl-1">Height (cm)</label>
-                <input 
-                  type="number" 
-                  value={profile.height} 
-                  onChange={(e) => update('height', parseInt(e.target.value))}
-                  className="w-full p-4 bg-gray-50 dark:bg-gray-900 dark:text-white rounded-2xl text-xl font-semibold border-none focus:ring-0 text-center"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-2 pl-1">Weight (kg)</label>
-                <input 
-                  type="number" 
-                  value={profile.weight} 
-                  onChange={(e) => update('weight', parseInt(e.target.value))}
-                  className="w-full p-4 bg-gray-50 dark:bg-gray-900 dark:text-white rounded-2xl text-xl font-semibold border-none focus:ring-0 text-center"
-                />
-              </div>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-3">
-            {Object.values(Goal).map(g => (
-              <button 
-                key={g}
-                onClick={() => update('goal', g)}
-                className={`w-full text-left p-5 rounded-2xl border transition-all duration-200 active:scale-95 ${profile.goal === g ? 'border-[#007AFF] bg-blue-50/50 dark:bg-blue-900/30 ring-1 ring-[#007AFF]' : 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-              >
-                <span className={`font-semibold block text-lg ${profile.goal === g ? 'text-[#007AFF]' : 'text-gray-900 dark:text-white'}`}>{g}</span>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="space-y-3">
-            {Object.values(ActivityLevel).map(l => (
-              <button 
-                key={l}
-                onClick={() => update('activityLevel', l)}
-                className={`w-full text-left p-5 rounded-2xl border transition-all duration-200 active:scale-95 ${profile.activityLevel === l ? 'border-[#007AFF] bg-blue-50/50 dark:bg-blue-900/30 ring-1 ring-[#007AFF]' : 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-              >
-                 <span className={`font-semibold block text-lg ${profile.activityLevel === l ? 'text-[#007AFF]' : 'text-gray-900 dark:text-white'}`}>{l}</span>
-              </button>
-            ))}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      <Button onClick={nextStep} fullWidth className="bg-[#007AFF] hover:bg-blue-600 shadow-blue-200 dark:shadow-none" disabled={isLoading}>
-        {isLoading ? <Loader2 className="animate-spin w-5 h-5 mx-auto"/> : (step === 3 ? "Complete Profile" : "Continue")}
-      </Button>
+      <div className="px-6 relative z-10">
+        <Button 
+           onClick={nextStep} 
+           fullWidth 
+           disabled={isLoading}
+           className="h-16 text-lg font-bold bg-white text-black hover:bg-gray-100 border-none shadow-[0_0_30px_rgba(255,255,255,0.15)] rounded-2xl"
+        >
+          {isLoading ? <Loader2 className="animate-spin w-6 h-6 mx-auto"/> : (step === 3 ? "Complete Profile" : "Continue")}
+        </Button>
+      </div>
     </div>
   );
 };
@@ -1150,6 +1030,154 @@ const ProgressDashboard: React.FC<{ log: DayLog, profile: UserProfile }> = ({ lo
             </div>
          </div>
       </div>
+    </div>
+  );
+};
+
+const AuthView: React.FC<{ 
+  onSuccess: () => void;
+  onSkip: () => void;
+  profile: UserProfile; 
+  setProfile: (p: UserProfile) => void;
+}> = ({ onSuccess, onSkip, profile, setProfile }) => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.signUp({ 
+            email, 
+            password,
+            options: {
+                data: {
+                    name: profile.name || 'User', // defaults if not filled
+                }
+            }
+        });
+        if (error) throw error;
+      }
+      onSuccess();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white flex flex-col justify-center px-6 relative overflow-hidden">
+        {/* Background blobs similar to onboarding */}
+       <AuroraBackground />
+
+       <div className="relative z-10 w-full max-w-sm mx-auto space-y-8">
+         <div className="text-center space-y-2">
+            <div className="mx-auto w-16 h-16 bg-gradient-to-tr from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/30">
+               <Sparkles className="text-white w-8 h-8" />
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight">Welcome to SnapCalorie</h1>
+            <p className="text-gray-400">Your AI-powered nutrition companion</p>
+         </div>
+
+         <form onSubmit={handleAuth} className="space-y-4">
+            <div className="space-y-4">
+                <div className="relative group">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-white transition-colors" size={20} />
+                    <input 
+                        type="email" 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Email"
+                        required
+                        className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all"
+                    />
+                </div>
+                <div className="relative group">
+                    <LockIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-white transition-colors" size={20} />
+                    <input 
+                        type="password" 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Password"
+                        required
+                        minLength={6}
+                        className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all"
+                    />
+                </div>
+            </div>
+
+            {error && <div className="text-red-400 text-sm text-center bg-red-900/20 py-2 rounded-lg">{error}</div>}
+
+            <Button 
+                type="submit" 
+                fullWidth 
+                disabled={loading}
+                className="bg-[#007AFF] hover:bg-blue-600 text-white border-none h-14 text-lg font-bold shadow-[0_0_20px_rgba(0,122,255,0.3)] mt-2"
+            >
+                {loading ? <Loader2 className="animate-spin mx-auto"/> : (isLogin ? "Sign In" : "Create Account")}
+            </Button>
+         </form>
+
+         <div className="text-center space-y-4">
+             <button 
+                onClick={() => setIsLogin(!isLogin)} 
+                className="text-sm text-gray-400 hover:text-white transition-colors"
+             >
+                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+             </button>
+             
+             <div className="relative">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
+                <div className="relative flex justify-center text-xs uppercase"><span className="bg-black px-2 text-gray-500">Or</span></div>
+             </div>
+
+             <button onClick={onSkip} className="text-sm font-semibold text-white hover:text-gray-300 transition-colors">
+                Continue as Guest
+             </button>
+         </div>
+       </div>
+    </div>
+  );
+};
+
+const ProcessingView: React.FC<{ image: string | null }> = ({ image }) => {
+  return (
+    <div className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center">
+       {image && (
+          <div className="absolute inset-0 z-0 opacity-50 blur-xl scale-110">
+             <img src={image} className="w-full h-full object-cover" alt="Processing" />
+          </div>
+       )}
+       <div className="relative z-10 flex flex-col items-center">
+          <div className="relative w-32 h-32 mb-8">
+             <div className="absolute inset-0 border-4 border-[#007AFF] rounded-3xl animate-pulse"></div>
+             <div className="absolute inset-0 border-t-4 border-l-4 border-white rounded-3xl animate-spin-slow"></div>
+             {image && (
+                 <div className="absolute inset-2 rounded-2xl overflow-hidden border-2 border-white/20">
+                    <img src={image} className="w-full h-full object-cover" alt="Analysis" />
+                 </div>
+             )}
+             <div className="absolute top-1/2 left-0 right-0 h-1 bg-white/80 shadow-[0_0_10px_white] animate-[scan_2s_ease-in-out_infinite]"></div>
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2 animate-pulse">Analyzing Food...</h2>
+          <p className="text-gray-400 text-sm">Identifying calories and macros</p>
+       </div>
+       <style>{`
+         @keyframes scan {
+           0%, 100% { top: 0%; opacity: 0; }
+           10%, 90% { opacity: 1; }
+           50% { top: 100%; }
+         }
+       `}</style>
     </div>
   );
 };
@@ -1560,7 +1588,7 @@ const App: React.FC = () => {
   if (currentView === 'PROFILE') {
      return (
         <div className="h-full">
-           <ProfileView profile={profile} onUpdate={handleUpdateProfile} onLogout={handleLogout} />
+           <PremiumProfileView profile={profile} onUpdate={handleUpdateProfile} onLogout={handleLogout} />
            <Navigation currentView={currentView} onNavigate={setCurrentView} onCameraClick={handleCameraClick} />
         </div>
      );
