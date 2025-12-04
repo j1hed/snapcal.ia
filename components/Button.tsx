@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -12,7 +13,7 @@ export const Button: React.FC<ButtonProps> = ({
   className = '', 
   ...props 
 }) => {
-  const baseStyles = "py-3.5 px-6 rounded-2xl font-semibold transition-all active:scale-95 duration-200 text-[17px]";
+  const baseStyles = "py-3.5 px-6 rounded-2xl font-semibold transition-all duration-200 active:scale-95 text-[17px] ease-out";
   
   const variants = {
     primary: "bg-black text-white shadow-lg shadow-black/10 hover:bg-gray-800",

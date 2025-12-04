@@ -1,3 +1,4 @@
+
 export enum Gender {
   Male = 'Male',
   Female = 'Female',
@@ -17,6 +18,12 @@ export enum ActivityLevel {
   Active = 'Very Active'
 }
 
+export interface UserPreferences {
+  darkMode: boolean;
+  notifications: boolean;
+  healthSync: boolean;
+}
+
 export interface UserProfile {
   name: string;
   age: number;
@@ -29,8 +36,16 @@ export interface UserProfile {
   targetProtein: number;
   targetCarbs: number;
   targetFat: number;
+  // Extended targets
+  targetFiber: number;
+  targetSugar: number;
+  maxSodium: number;
+  maxCholesterol: number;
+  
   hasOnboarded: boolean;
   isPremium: boolean;
+  
+  preferences: UserPreferences;
 }
 
 export interface MacroData {
@@ -38,6 +53,11 @@ export interface MacroData {
   protein: number;
   carbs: number;
   fat: number;
+  // Extended nutrients
+  fiber?: number;
+  sugar?: number;
+  sodium?: number;
+  cholesterol?: number;
 }
 
 export interface FoodLogItem extends MacroData {
@@ -52,6 +72,7 @@ export interface FoodLogItem extends MacroData {
 export interface DayLog {
   date: string; // YYYY-MM-DD
   items: FoodLogItem[];
+  waterIntake: number; // in ml
 }
 
-export type ViewState = 'ONBOARDING' | 'PAYWALL' | 'DASHBOARD' | 'CAMERA' | 'REVIEW' | 'PROFILE';
+export type ViewState = 'ONBOARDING' | 'AUTH' | 'PAYWALL' | 'DASHBOARD' | 'PROGRESS' | 'CAMERA' | 'REVIEW' | 'PROFILE' | 'AWARDS';

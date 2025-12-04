@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { MacroData } from "../types";
 
@@ -26,7 +27,7 @@ export const analyzeFoodImage = async (base64Image: string): Promise<AIAnalysisR
             }
           },
           {
-            text: "Analyze this image of food. Identify the main dish or components. Estimate the total calories, protein, carbs, and fat for the entire visible portion. Provide a short description and a confidence score (0-100)."
+            text: "Analyze this image of food. Identify the main dish or components. Estimate the total calories, protein, carbs, fat, fiber, sugar, sodium, and cholesterol for the entire visible portion. Provide a short description and a confidence score (0-100)."
           }
         ]
       },
@@ -40,6 +41,10 @@ export const analyzeFoodImage = async (base64Image: string): Promise<AIAnalysisR
             protein: { type: Type.INTEGER, description: "Protein in grams" },
             carbs: { type: Type.INTEGER, description: "Carbohydrates in grams" },
             fat: { type: Type.INTEGER, description: "Fat in grams" },
+            fiber: { type: Type.INTEGER, description: "Fiber in grams" },
+            sugar: { type: Type.INTEGER, description: "Sugar in grams" },
+            sodium: { type: Type.INTEGER, description: "Sodium in milligrams" },
+            cholesterol: { type: Type.INTEGER, description: "Cholesterol in milligrams" },
             description: { type: Type.STRING, description: "A brief 1-sentence description of the food and portion" },
             confidence: { type: Type.INTEGER, description: "Confidence score 0-100" }
           },
@@ -63,6 +68,10 @@ export const analyzeFoodImage = async (base64Image: string): Promise<AIAnalysisR
       protein: 0,
       carbs: 0,
       fat: 0,
+      fiber: 0,
+      sugar: 0,
+      sodium: 0,
+      cholesterol: 0,
       description: "Could not identify food. Please try again.",
       confidence: 0
     };
