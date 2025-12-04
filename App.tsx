@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Utensils, Award, ChevronRight, Settings, Droplets, Plus, Minus, Bell, Moon, Smartphone, Flame, Carrot, Pizza, Apple, CheckCircle2, Lock, Sparkles, LogOut, User as UserIcon, Loader2, Mail, Lock as LockIcon, Eye, EyeOff, ArrowRight, ScanLine, Activity, Zap, Ruler, Weight, Target, Footprints, Trophy } from 'lucide-react';
+import { Utensils, Award, ChevronRight, Settings, Droplets, Plus, Minus, Bell, Moon, Smartphone, Flame, Carrot, Pizza, Apple, CheckCircle2, Lock, Sparkles, LogOut, User as UserIcon, Loader2, Mail, Lock as LockIcon, Eye, EyeOff, ArrowRight, ScanLine, Activity, Zap, Ruler, Weight, Target, Footprints, Trophy, X, Crown } from 'lucide-react';
 import { Button } from './components/Button';
 import { Navigation } from './components/Navigation';
 import { Card } from './components/Card';
@@ -14,6 +14,63 @@ import {
   DayLog, 
   FoodLogItem 
 } from './types';
+
+// --- Achievement Definitions ---
+interface AchievementDef {
+  id: string;
+  title: string;
+  desc: string;
+  icon: string;
+  condition: (log: DayLog, profile: UserProfile) => boolean;
+}
+
+const ALL_ACHIEVEMENTS: AchievementDef[] = [
+  { 
+    id: 'early-bird', 
+    title: 'Early Bird', 
+    desc: 'Log breakfast before 9 AM', 
+    icon: '🌅',
+    condition: (log) => log.items.some(i => i.mealType === 'Breakfast' && new Date(i.timestamp).getHours() < 9)
+  },
+  { 
+    id: 'hydration-hero', 
+    title: 'Hydration Hero', 
+    desc: 'Drink 2500ml of water', 
+    icon: '💧',
+    condition: (log) => log.waterIntake >= 2500
+  },
+  { 
+    id: 'protein-power', 
+    title: 'Protein Power', 
+    desc: 'Hit your daily protein goal', 
+    icon: '💪',
+    condition: (log, profile) => {
+       const totalProtein = log.items.reduce((acc, i) => acc + i.protein, 0);
+       return totalProtein >= profile.targetProtein;
+    }
+  },
+  { 
+    id: 'green-giant', 
+    title: 'Green Giant', 
+    desc: 'Log a food with >5g fiber', 
+    icon: '🥦',
+    condition: (log) => log.items.some(i => (i.fiber || 0) > 5)
+  },
+  { 
+    id: 'night-owl', 
+    title: 'Night Owl', 
+    desc: 'Log a snack after 8 PM', 
+    icon: '🦉',
+    condition: (log) => log.items.some(i => i.mealType === 'Snack' && new Date(i.timestamp).getHours() >= 20)
+  },
+  {
+    id: 'first-step',
+    title: 'First Step',
+    desc: 'Log your very first meal', 
+    icon: '🚀',
+    condition: (log) => log.items.length >= 1
+  }
+];
 
 // --- Default/Initial State ---
 
@@ -38,7 +95,8 @@ const INITIAL_PROFILE: UserProfile = {
   preferences: {
     darkMode: false,
     notifications: true,
-    healthSync: false
+    healthSync: false,
+    unlockedAwards: []
   }
 };
 
@@ -81,6 +139,204 @@ const calculateMacros = (profile: UserProfile): UserProfile => {
 };
 
 // --- Animation Components ---
+
+const FireflyParticles: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const particles: any[] = [];
+    const count = 40;
+
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        size: Math.random() * 2 + 0.5,
+        opacity: Math.random(),
+        fadeSpeed: Math.random() * 0.02 + 0.005,
+        fadingIn: Math.random() > 0.5
+      });
+    }
+
+    let animationId: number;
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        
+        // Wrap around screen
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+
+        // Pulse opacity
+        if (p.fadingIn) {
+           p.opacity += p.fadeSpeed;
+           if (p.opacity >= 1) p.fadingIn = false;
+        } else {
+           p.opacity -= p.fadeSpeed;
+           if (p.opacity <= 0.1) p.fadingIn = true;
+        }
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 220, 100, ${p.opacity})`;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "rgba(255, 220, 100, 0.8)";
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+
+      animationId = requestAnimationFrame(animate);
+    };
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', resize);
+      cancelAnimationFrame(animationId);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />;
+};
+
+const FloatingFoodBackground: React.FC = () => {
+   const foods = ['🥗', '🥩', '🥑', '🫐', '🥚', '🥪', '🍎', '🥦'];
+   const items = useMemo(() => Array.from({ length: 15 }).map((_, i) => ({
+      id: i,
+      icon: foods[i % foods.length],
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      scale: Math.random() * 0.5 + 0.5,
+      blur: Math.random() * 4,
+      duration: Math.random() * 20 + 20,
+      delay: Math.random() * -20
+   })), []);
+
+   return (
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+         {items.map(item => (
+            <div 
+               key={item.id}
+               className="absolute text-4xl opacity-10 animate-float-slow"
+               style={{
+                  left: `${item.left}%`,
+                  top: `${item.top}%`,
+                  transform: `scale(${item.scale})`,
+                  filter: `blur(${item.blur}px)`,
+                  animationDuration: `${item.duration}s`,
+                  animationDelay: `${item.delay}s`
+               }}
+            >
+               {item.icon}
+            </div>
+         ))}
+         <style>{`
+            @keyframes float-slow {
+               0% { transform: translate(0, 0) rotate(0deg); }
+               33% { transform: translate(30px, -50px) rotate(10deg); }
+               66% { transform: translate(-20px, 20px) rotate(-5deg); }
+               100% { transform: translate(0, 0) rotate(0deg); }
+            }
+         `}</style>
+      </div>
+   );
+};
+
+const GoldenParticleBurst: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles: any[] = [];
+    const colors = ['#FFD700', '#FFA500', '#FFFFFF', '#FDB931']; // Gold palette
+
+    // Create explosion from center
+    for (let i = 0; i < 150; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const velocity = Math.random() * 15 + 5;
+      particles.push({
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        vx: Math.cos(angle) * velocity,
+        vy: Math.sin(angle) * velocity,
+        size: Math.random() * 6 + 2,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        friction: 0.95,
+        gravity: 0.2,
+        alpha: 1,
+        decay: Math.random() * 0.015 + 0.005
+      });
+    }
+
+    let animationId: number;
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let activeParticles = 0;
+
+      particles.forEach(p => {
+        if (p.alpha > 0) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vx *= p.friction;
+          p.vy += p.gravity; // Gravity pulls them down
+          p.alpha -= p.decay;
+
+          ctx.save();
+          ctx.globalAlpha = p.alpha;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Add "shine" to some particles
+          if (Math.random() > 0.9) {
+             ctx.fillStyle = '#FFFFFF';
+             ctx.beginPath();
+             ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
+             ctx.fill();
+          }
+          
+          ctx.restore();
+          activeParticles++;
+        }
+      });
+
+      if (activeParticles > 0) {
+        animationId = requestAnimationFrame(animate);
+      }
+    };
+
+    animate();
+    return () => cancelAnimationFrame(animationId);
+  }, []);
+
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-[100]" />;
+};
 
 const Confetti: React.FC<{ active: boolean }> = ({ active }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -235,6 +491,47 @@ const AuroraBackground: React.FC = () => (
   </div>
 );
 
+const AchievementUnlockModal: React.FC<{ 
+  achievement: AchievementDef | null; 
+  onClose: () => void; 
+}> = ({ achievement, onClose }) => {
+  if (!achievement) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6" onClick={onClose}>
+       <GoldenParticleBurst />
+       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300"></div>
+       
+       <div 
+         className="relative bg-gradient-to-br from-gray-900 to-black rounded-[32px] p-8 w-full max-w-sm text-center border border-yellow-500/30 shadow-[0_0_50px_rgba(255,215,0,0.3)] animate-in zoom-in slide-in-from-bottom-10 duration-500 transform perspective-1000"
+         onClick={(e) => e.stopPropagation()}
+       >
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2">
+             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-300 to-orange-500 flex items-center justify-center text-5xl shadow-[0_0_30px_rgba(255,215,0,0.6)] animate-bounce-slow border-4 border-black">
+                {achievement.icon}
+             </div>
+          </div>
+          
+          <div className="mt-10 space-y-2">
+             <div className="text-yellow-400 font-bold uppercase tracking-widest text-xs animate-pulse">Achievement Unlocked</div>
+             <h2 className="text-3xl font-bold text-white tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-200">{achievement.title}</h2>
+             <p className="text-gray-400 text-sm leading-relaxed">{achievement.desc}</p>
+          </div>
+
+          <div className="mt-8">
+             <Button 
+                onClick={onClose} 
+                className="bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold border-none shadow-lg shadow-yellow-500/20 hover:scale-105 transition-transform"
+                fullWidth
+             >
+                Awesome!
+             </Button>
+          </div>
+       </div>
+    </div>
+  );
+};
+
 // --- Sub-components ---
 
 const SemiCircleGauge: React.FC<{ 
@@ -376,15 +673,8 @@ const WaterTracker: React.FC<{
   );
 };
 
-const AwardsView: React.FC = () => {
-   const achievements = [
-      { id: 1, title: 'Early Bird', desc: 'Log breakfast before 9 AM', locked: false, icon: '🌅' },
-      { id: 2, title: 'Hydration Hero', desc: 'Drink 2500ml of water', locked: true, icon: '💧' },
-      { id: 3, title: 'Protein Power', desc: 'Hit protein goal 3 days', locked: true, icon: '💪' },
-      { id: 4, title: 'Green Giant', desc: 'Log 5 types of veggies', locked: true, icon: '🥦' },
-      { id: 5, title: 'Streak Master', desc: 'Log for 7 days in a row', locked: true, icon: '🔥' },
-      { id: 6, title: 'Night Owl', desc: 'Log a snack after 8 PM', locked: false, icon: '🦉' },
-   ];
+const AwardsView: React.FC<{ profile: UserProfile }> = ({ profile }) => {
+   const unlockedSet = new Set(profile.preferences.unlockedAwards || []);
 
    return (
       <div className="h-full bg-[#F2F2F7] dark:bg-black overflow-y-auto pb-24 transition-colors duration-500">
@@ -414,21 +704,23 @@ const AwardsView: React.FC = () => {
                   Achievement Museum <Sparkles size={18} className="text-yellow-500" />
                </h2>
                <div className="grid grid-cols-2 gap-4">
-                  {achievements.map((ach) => (
+                  {ALL_ACHIEVEMENTS.map((ach) => {
+                     const isUnlocked = unlockedSet.has(ach.id);
+                     return (
                      <div key={ach.id} className="group perspective-1000 h-40 cursor-pointer">
                         <div className={`relative w-full h-full transition-all duration-500 transform-style-3d group-hover:rotate-y-180`}>
                            {/* Front */}
-                           <div className={`absolute inset-0 backface-hidden rounded-2xl p-4 flex flex-col items-center justify-center border shadow-sm dark:bg-[#1C1C1E] dark:border-gray-800 ${ach.locked ? 'bg-gray-100 border-gray-200 dark:bg-[#1C1C1E] dark:border-gray-800' : 'bg-white border-yellow-100 shadow-yellow-100/50'}`}>
-                              <div className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-3 shadow-sm ${ach.locked ? 'bg-gray-200 dark:bg-gray-700 grayscale opacity-50' : 'bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/50 dark:to-orange-900/50'}`}>
-                                 {ach.locked ? <Lock size={24} className="text-gray-400" /> : ach.icon}
+                           <div className={`absolute inset-0 backface-hidden rounded-2xl p-4 flex flex-col items-center justify-center border shadow-sm dark:bg-[#1C1C1E] dark:border-gray-800 ${!isUnlocked ? 'bg-gray-100 border-gray-200 dark:bg-[#1C1C1E] dark:border-gray-800' : 'bg-white border-yellow-100 shadow-yellow-100/50'}`}>
+                              <div className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-3 shadow-sm ${!isUnlocked ? 'bg-gray-200 dark:bg-gray-700 grayscale opacity-50' : 'bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/50 dark:to-orange-900/50'}`}>
+                                 {!isUnlocked ? <Lock size={24} className="text-gray-400" /> : ach.icon}
                               </div>
-                              <span className={`font-bold text-sm text-center ${ach.locked ? 'text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>{ach.title}</span>
+                              <span className={`font-bold text-sm text-center ${!isUnlocked ? 'text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>{ach.title}</span>
                            </div>
                            
                            {/* Back */}
                            <div className="absolute inset-0 backface-hidden rotate-y-180 bg-[#007AFF] rounded-2xl p-4 flex flex-col items-center justify-center text-white shadow-lg">
                               <p className="text-center text-sm font-medium leading-relaxed">{ach.desc}</p>
-                              {ach.locked ? (
+                              {!isUnlocked ? (
                                  <div className="mt-2 px-3 py-1 bg-black/20 rounded-full text-xs font-bold">LOCKED</div>
                               ) : (
                                  <div className="mt-2 px-3 py-1 bg-white/20 rounded-full text-xs font-bold flex items-center gap-1"><CheckCircle2 size={12}/> UNLOCKED</div>
@@ -436,7 +728,7 @@ const AwardsView: React.FC = () => {
                            </div>
                         </div>
                      </div>
-                  ))}
+                  )})}
                </div>
             </div>
          </div>
@@ -477,6 +769,76 @@ const Switch: React.FC<{
       </div>
     </div>
   );
+};
+
+const PremiumCard: React.FC<{ isPremium: boolean; onUpgrade?: () => void }> = ({ isPremium, onUpgrade }) => {
+   return (
+      <div className="relative group perspective-1000 h-48 w-full cursor-pointer" onClick={isPremium ? undefined : onUpgrade}>
+         <div className={`relative w-full h-full rounded-[24px] overflow-hidden transition-transform duration-500 shadow-xl ${isPremium ? 'bg-gradient-to-br from-gray-900 to-black text-white' : 'bg-gradient-to-br from-[#007AFF] to-[#0055FF] text-white'}`}>
+            
+            {/* Holographic/Shine Effect */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent w-[200%] h-full animate-shimmer-fast pointer-events-none skew-x-12 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            
+            {/* Content */}
+            <div className="absolute inset-0 p-6 flex flex-col justify-between z-10">
+               <div className="flex justify-between items-start">
+                  <div>
+                     {isPremium ? (
+                        <div className="flex items-center gap-2 text-yellow-400 font-bold tracking-widest uppercase text-xs mb-1">
+                           <Crown size={14} fill="currentColor" /> Elite Member
+                        </div>
+                     ) : (
+                        <div className="font-bold tracking-widest uppercase text-xs mb-1 text-blue-200">
+                           Free Plan
+                        </div>
+                     )}
+                     <h3 className="text-2xl font-serif font-bold tracking-wide">
+                        {isPremium ? 'SnapCalorie Black' : 'Upgrade to Pro'}
+                     </h3>
+                  </div>
+                  {/* Chip Icon */}
+                  <div className="w-10 h-8 rounded-md bg-gradient-to-br from-yellow-200 to-yellow-500 opacity-80 border border-yellow-600/30 flex items-center justify-center">
+                     <div className="w-full h-[1px] bg-yellow-700/50 mb-[2px]"></div>
+                     <div className="w-full h-[1px] bg-yellow-700/50 mb-[2px]"></div>
+                     <div className="w-full h-[1px] bg-yellow-700/50"></div>
+                  </div>
+               </div>
+
+               {isPremium ? (
+                  <div className="flex justify-between items-end">
+                     <div>
+                        <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Valid Thru</div>
+                        <div className="font-mono text-lg">12/25</div>
+                     </div>
+                     <div className="font-mono tracking-widest text-sm text-gray-400">•••• 4291</div>
+                  </div>
+               ) : (
+                  <div>
+                     <div className="space-y-1 mb-4">
+                        <div className="flex items-center gap-2 text-sm text-blue-100"><CheckCircle2 size={12} /> Unlimited AI Logging</div>
+                        <div className="flex items-center gap-2 text-sm text-blue-100"><CheckCircle2 size={12} /> Advanced Analytics</div>
+                     </div>
+                     <button className="bg-white text-[#007AFF] px-4 py-2 rounded-full text-xs font-bold shadow-lg w-full hover:bg-gray-50 transition-colors">
+                        Get Premium
+                     </button>
+                  </div>
+               )}
+            </div>
+
+            {/* Decor */}
+            <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
+         </div>
+         <style>{`
+            @keyframes shimmer-fast {
+               0% { transform: translateX(-150%) skewX(-12deg); }
+               100% { transform: translateX(150%) skewX(-12deg); }
+            }
+            .animate-shimmer-fast {
+               animation: shimmer-fast 3s infinite linear;
+            }
+         `}</style>
+      </div>
+   );
 };
 
 const PremiumProfileView: React.FC<{ 
@@ -624,6 +986,9 @@ const PremiumProfileView: React.FC<{
                </div>
            </div>
         </div>
+
+        {/* 2.5 Premium Card */}
+        <PremiumCard isPremium={profile.isPremium} />
 
         {/* 3. Personal Records */}
         <div className="bg-white dark:bg-[#1C1C1E] rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-100 dark:border-gray-800 overflow-hidden transition-all duration-300">
@@ -1075,76 +1440,111 @@ const AuthView: React.FC<{
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col justify-center px-6 relative overflow-hidden">
-        {/* Background blobs similar to onboarding */}
-       <AuroraBackground />
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center relative overflow-hidden">
+        {/* Background Layers */}
+        <AuroraBackground />
+        <FireflyParticles />
+        <FloatingFoodBackground />
 
-       <div className="relative z-10 w-full max-w-sm mx-auto space-y-8">
-         <div className="text-center space-y-2">
-            <div className="mx-auto w-16 h-16 bg-gradient-to-tr from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/30">
-               <Sparkles className="text-white w-8 h-8" />
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight">Welcome to SnapCalorie</h1>
-            <p className="text-gray-400">Your AI-powered nutrition companion</p>
-         </div>
+        {/* 3D Tilt Card Container */}
+        <div className="relative z-10 w-full max-w-md px-6 perspective-1000">
+           <div className="group relative transition-transform duration-300 ease-out hover:rotate-x-2 hover:rotate-y-2">
+              
+              {/* Glass Card */}
+              <div className="bg-white/10 backdrop-blur-2xl rounded-[32px] p-8 border border-white/20 shadow-2xl relative overflow-hidden">
+                 
+                 {/* Shine Effect */}
+                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent w-[200%] h-full animate-shimmer-fast pointer-events-none opacity-50"></div>
 
-         <form onSubmit={handleAuth} className="space-y-4">
-            <div className="space-y-4">
-                <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-white transition-colors" size={20} />
-                    <input 
-                        type="email" 
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Email"
-                        required
-                        className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all"
-                    />
-                </div>
-                <div className="relative group">
-                    <LockIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-white transition-colors" size={20} />
-                    <input 
-                        type="password" 
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Password"
-                        required
-                        minLength={6}
-                        className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all"
-                    />
-                </div>
-            </div>
+                 {/* Logo Area */}
+                 <div className="text-center mb-8 relative z-10">
+                    <div className="w-20 h-20 bg-gradient-to-br from-[#007AFF] to-indigo-600 rounded-[28px] mx-auto flex items-center justify-center shadow-lg shadow-blue-500/40 mb-6 animate-float-slow">
+                       <Sparkles className="text-white w-10 h-10" />
+                    </div>
+                    <h1 className="text-4xl font-bold tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-gray-400 drop-shadow-sm">SnapCalorie</h1>
+                    <p className="text-blue-200 text-sm font-medium tracking-wide">AI NUTRITION TRACKER</p>
+                 </div>
 
-            {error && <div className="text-red-400 text-sm text-center bg-red-900/20 py-2 rounded-lg">{error}</div>}
+                 {/* Form */}
+                 <form onSubmit={handleAuth} className="space-y-4 relative z-10">
+                    <div className="space-y-4">
+                        <div className="relative group">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#007AFF] transition-colors" size={20} />
+                            <input 
+                                type="email" 
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Email"
+                                required
+                                className="w-full pl-12 pr-4 py-4 bg-black/20 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:bg-black/40 focus:border-blue-500/50 transition-all"
+                                autoCapitalize="none"
+                                autoCorrect="off"
+                                autoComplete="email"
+                            />
+                        </div>
+                        <div className="relative group">
+                            <LockIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#007AFF] transition-colors" size={20} />
+                            <input 
+                                type="password" 
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Password"
+                                required
+                                minLength={6}
+                                className="w-full pl-12 pr-4 py-4 bg-black/20 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:bg-black/40 focus:border-blue-500/50 transition-all"
+                                autoCapitalize="none"
+                                autoCorrect="off"
+                                autoComplete="current-password"
+                            />
+                        </div>
+                    </div>
 
-            <Button 
-                type="submit" 
-                fullWidth 
-                disabled={loading}
-                className="bg-[#007AFF] hover:bg-blue-600 text-white border-none h-14 text-lg font-bold shadow-[0_0_20px_rgba(0,122,255,0.3)] mt-2"
-            >
-                {loading ? <Loader2 className="animate-spin mx-auto"/> : (isLogin ? "Sign In" : "Create Account")}
-            </Button>
-         </form>
+                    {error && (
+                       <div className="text-red-300 text-sm text-center bg-red-900/30 py-3 rounded-xl border border-red-500/20 backdrop-blur-sm animate-in fade-in slide-in-from-top-2">
+                          {error === "Invalid login credentials" ? "Invalid login credentials. Need to Sign Up?" : error}
+                       </div>
+                    )}
 
-         <div className="text-center space-y-4">
-             <button 
-                onClick={() => setIsLogin(!isLogin)} 
-                className="text-sm text-gray-400 hover:text-white transition-colors"
-             >
-                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-             </button>
-             
-             <div className="relative">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
-                <div className="relative flex justify-center text-xs uppercase"><span className="bg-black px-2 text-gray-500">Or</span></div>
-             </div>
+                    <button 
+                        type="submit" 
+                        disabled={loading}
+                        className="w-full bg-[#007AFF] hover:bg-blue-500 text-white h-14 rounded-2xl text-lg font-bold shadow-[0_0_20px_rgba(0,122,255,0.4)] mt-4 relative overflow-hidden group/btn transition-all active:scale-[0.98]"
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent w-full -translate-x-full group-hover/btn:animate-[shimmer_1s_infinite]"></div>
+                        {loading ? <Loader2 className="animate-spin mx-auto"/> : (isLogin ? "Sign In" : "Create Account")}
+                    </button>
+                 </form>
 
-             <button onClick={onSkip} className="text-sm font-semibold text-white hover:text-gray-300 transition-colors">
-                Continue as Guest
-             </button>
-         </div>
-       </div>
+                 {/* Footer Links */}
+                 <div className="text-center space-y-5 mt-6 relative z-10">
+                     <button 
+                        onClick={() => {
+                           setIsLogin(!isLogin);
+                           setError(null);
+                        }} 
+                        className="text-sm text-gray-400 hover:text-white transition-colors font-medium"
+                     >
+                        {isLogin ? "New here? Create account" : "Have an account? Sign in"}
+                     </button>
+                     
+                     <div className="relative py-2">
+                        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
+                        <div className="relative flex justify-center text-[10px] uppercase tracking-widest"><span className="bg-transparent px-2 text-gray-500">Or continue with</span></div>
+                     </div>
+
+                     <button onClick={onSkip} className="text-sm font-semibold text-white hover:text-blue-200 transition-colors flex items-center justify-center gap-2 w-full py-2 hover:bg-white/5 rounded-xl">
+                        Guest Mode <ArrowRight size={14} />
+                     </button>
+                 </div>
+              </div>
+           </div>
+        </div>
+        
+        <style>{`
+           .rotate-x-2 { transform: rotateX(2deg); }
+           .rotate-y-2 { transform: rotateY(2deg); }
+           .perspective-1000 { perspective: 1000px; }
+        `}</style>
     </div>
   );
 };
@@ -1206,6 +1606,9 @@ const App: React.FC = () => {
 
   // Confetti State
   const [showConfetti, setShowConfetti] = useState(false);
+
+  // Achievement Unlock State
+  const [justUnlockedAchievement, setJustUnlockedAchievement] = useState<AchievementDef | null>(null);
 
   // --- Supabase Persistence Logic ---
 
@@ -1303,7 +1706,8 @@ const App: React.FC = () => {
         items: (foodData || []).map((f: any) => ({
             ...f,
             timestamp: new Date(f.created_at).getTime(),
-            mealType: f.meal_type
+            mealType: f.meal_type,
+            imageUrl: f.image_url // map DB column to state property
         })),
         waterIntake: totalWater
       });
@@ -1327,6 +1731,42 @@ const App: React.FC = () => {
   const handleGuestContinue = () => {
      setIsGuest(true);
      setCurrentView('ONBOARDING');
+  };
+
+  const checkAchievements = async (log: DayLog, currentProfile: UserProfile) => {
+     const unlockedIds = new Set(currentProfile.preferences.unlockedAwards || []);
+     const newUnlocks: AchievementDef[] = [];
+
+     ALL_ACHIEVEMENTS.forEach(ach => {
+        if (!unlockedIds.has(ach.id)) {
+           if (ach.condition(log, currentProfile)) {
+              newUnlocks.push(ach);
+              unlockedIds.add(ach.id);
+           }
+        }
+     });
+
+     if (newUnlocks.length > 0) {
+        // Trigger celebration
+        setJustUnlockedAchievement(newUnlocks[0]);
+        if (typeof navigator.vibrate === 'function') {
+           navigator.vibrate([100, 50, 100]); // Haptic feedback
+        }
+
+        // Update profile
+        const updatedPrefs = { 
+           ...currentProfile.preferences, 
+           unlockedAwards: Array.from(unlockedIds) 
+        };
+        const updatedProfile = { ...currentProfile, preferences: updatedPrefs };
+        setProfile(updatedProfile);
+
+        // Save to DB if user
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (currentSession?.user?.id) {
+           await supabase.from('profiles').update({ preferences: updatedPrefs }).eq('id', currentSession.user.id);
+        }
+     }
   };
 
   const handleAuthSuccess = async () => {
@@ -1457,11 +1897,13 @@ const App: React.FC = () => {
         imageUrl: capturedImage || undefined
       };
 
+      const updatedLog = {
+        ...todayLog,
+        items: [newItem, ...todayLog.items]
+      };
+
       // Optimistic Update
-      setTodayLog(prev => ({
-        ...prev,
-        items: [newItem, ...prev.items]
-      }));
+      setTodayLog(updatedLog);
       setCurrentView('DASHBOARD');
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 4000);
@@ -1469,6 +1911,9 @@ const App: React.FC = () => {
       setCapturedImage(null);
       setAnalysisResult(null);
       setEditForm(null);
+
+      // Check Achievements
+      checkAchievements(updatedLog, profile);
 
       // Save to Supabase (Only if authenticated)
       const { data: { session: currentSession } } = await supabase.auth.getSession();
@@ -1487,6 +1932,7 @@ const App: React.FC = () => {
           sodium: editForm.sodium,
           cholesterol: editForm.cholesterol,
           confidence: editForm.confidence,
+          image_url: capturedImage, // Save image
         });
 
         if (error) console.error("Error saving food:", error);
@@ -1496,8 +1942,12 @@ const App: React.FC = () => {
   };
 
   const handleAddWater = async (amount: number) => {
+    const updatedLog = { ...todayLog, waterIntake: (todayLog.waterIntake || 0) + amount };
     // Optimistic Update
-    setTodayLog(prev => ({ ...prev, waterIntake: (prev.waterIntake || 0) + amount }));
+    setTodayLog(updatedLog);
+
+    // Check Achievements
+    checkAchievements(updatedLog, profile);
 
     // Save to Supabase (Only if authenticated)
     const { data: { session: currentSession } } = await supabase.auth.getSession();
@@ -1579,7 +2029,7 @@ const App: React.FC = () => {
   if (currentView === 'AWARDS') {
      return (
         <div className="h-full">
-           <AwardsView />
+           <AwardsView profile={profile} />
            <Navigation currentView={currentView} onNavigate={setCurrentView} onCameraClick={handleCameraClick} />
         </div>
      );
@@ -1726,6 +2176,15 @@ const App: React.FC = () => {
   return (
     <div className="h-full bg-[#F2F2F7] dark:bg-black font-sans text-slate-900 dark:text-white pb-24 overflow-y-auto transition-colors duration-500">
       <Confetti active={showConfetti} />
+      
+      {/* Unlock Modal */}
+      {justUnlockedAchievement && (
+         <AchievementUnlockModal 
+            achievement={justUnlockedAchievement} 
+            onClose={() => setJustUnlockedAchievement(null)} 
+         />
+      )}
+
       <style>{`
          @keyframes breathe {
             0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255,255,255,0.2)); }

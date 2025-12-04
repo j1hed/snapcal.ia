@@ -7,6 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#F2F2F7" />
     <title>SnapCalorie AI</title>
+    <!-- We keep Tailwind CDN for simplicity in this specific project setup -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -28,7 +29,7 @@
       }
     </script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@400;600;700&display=swap');
       
       :root {
         --ios-blue: #007AFF;
@@ -43,13 +44,12 @@
         -webkit-touch-callout: none;
         -webkit-user-select: none;
         user-select: none;
-        overscroll-behavior-y: none; /* Prevents pull-to-refresh on mobile web */
+        overscroll-behavior-y: none;
         height: 100vh;
         width: 100vw;
-        overflow: hidden; /* App container handles scroll */
+        overflow: hidden;
       }
 
-      /* Dark mode body background override */
       html.dark body {
         background-color: #000000;
         --ios-background: #000000;
@@ -69,7 +69,6 @@
         padding-top: env(safe-area-inset-top);
       }
       
-      /* Hide scrollbar for clean UI */
       .no-scrollbar::-webkit-scrollbar {
         display: none;
       }
@@ -78,7 +77,6 @@
         scrollbar-width: none;
       }
 
-      /* iOS-like transitions */
       .ios-slide-up {
         animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
       }
@@ -91,12 +89,14 @@
   <script type="importmap">
 {
   "imports": {
+    "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.86.2",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
     "react/": "https://aistudiocdn.com/react@^19.2.1/",
     "react": "https://aistudiocdn.com/react@^19.2.1",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
-    "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.86.2"
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "vite": "https://aistudiocdn.com/vite@^7.2.6"
   }
 }
 </script>

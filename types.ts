@@ -22,6 +22,7 @@ export interface UserPreferences {
   darkMode: boolean;
   notifications: boolean;
   healthSync: boolean;
+  unlockedAwards?: string[]; // Array of Achievement IDs
 }
 
 export interface UserProfile {
