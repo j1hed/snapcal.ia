@@ -1,9 +1,11 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { MacroData } from "../types";
 
 // Initialize the client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Use a fallback to prevent the app from crashing immediately on load if the key is missing.
+// The actual API call will fail later with a clear error if the key is invalid.
+const apiKey = process.env.API_KEY || 'placeholder_key_to_prevent_crash';
+const ai = new GoogleGenAI({ apiKey });
 
 export interface AIAnalysisResult extends MacroData {
   foodName: string;
@@ -13,6 +15,10 @@ export interface AIAnalysisResult extends MacroData {
 
 export const analyzeFoodImage = async (base64Image: string): Promise<AIAnalysisResult> => {
   try {
+    if (apiKey === 'placeholder_key_to_prevent_crash') {
+       throw new Error("API Key is missing. Please set the API_KEY environment variable.");
+    }
+
     // Clean base64 string if it contains the data:image prefix
     const cleanBase64 = base64Image.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, "");
 
