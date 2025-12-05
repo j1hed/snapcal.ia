@@ -3,6 +3,7 @@ import { MacroData } from "../types";
 
 // The API key must be obtained exclusively from the environment variable process.env.API_KEY.
 // This is compatible with Vercel and local setups as long as vite.config.ts defines process.env.
+// Get your FREE API key here: https://aistudio.google.com/app/apikey
 const apiKey = process.env.API_KEY || '';
 
 // Initialize with a fallback to prevent immediate crash, but validation happens in the function
@@ -19,8 +20,12 @@ export const analyzeFoodImage = async (base64Image: string): Promise<AIAnalysisR
     // Check for valid API key before making request
     if (!apiKey || apiKey === 'fallback_key_to_init') {
        console.error("API Key is missing.");
-       // Provide a helpful message directing the user to the free key source
-       throw new Error("Configuration Error: API Key is missing. Get a FREE key at https://aistudio.google.com/app/apikey and set it as API_KEY.");
+       throw new Error(
+         "Configuration Error: API Key is missing.\n\n" +
+         "1. Get a FREE key at https://aistudio.google.com/app/apikey\n" +
+         "2. If running locally, add API_KEY=your_key to .env\n" +
+         "3. If on Vercel, go to Settings > Environment Variables and add API_KEY"
+       );
     }
 
     // 1. Extract the actual MIME type from the base64 string (e.g., "image/png")
@@ -30,6 +35,7 @@ export const analyzeFoodImage = async (base64Image: string): Promise<AIAnalysisR
     // 2. Clean base64 string by removing the data URL prefix
     const cleanBase64 = base64Image.replace(/^data:image\/[a-zA-Z+]+;base64,/, "");
 
+    // We use gemini-2.5-flash because it is fast and has a generous free tier.
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: {
@@ -81,6 +87,8 @@ export const analyzeFoodImage = async (base64Image: string): Promise<AIAnalysisR
     
     if (error.message?.includes("400") || error.message?.includes("INVALID_ARGUMENT")) {
         errorMessage = "Image format error. Please try taking the photo again.";
+    } else if (error.message?.includes("429") || error.message?.includes("RESOURCE_EXHAUSTED")) {
+        errorMessage = "Free API limit reached. Please wait a moment and try again.";
     } else if (error.message?.includes("API Key") || error.message?.includes("Configuration Error")) {
         errorMessage = error.message; // Pass through our custom helpful message
     }
