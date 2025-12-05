@@ -1,11 +1,12 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { MacroData } from "../types";
 
-// Initialize the client
-// Use a fallback to prevent the app from crashing immediately on load if the key is missing.
-// The actual API call will fail later with a clear error if the key is invalid.
-const apiKey = process.env.API_KEY || 'placeholder_key_to_prevent_crash';
-const ai = new GoogleGenAI({ apiKey });
+// The API key must be obtained exclusively from the environment variable process.env.API_KEY.
+// This is compatible with Vercel and local setups as long as vite.config.ts defines process.env.
+const apiKey = process.env.API_KEY || '';
+
+// Initialize with a fallback to prevent immediate crash, but validation happens in the function
+const ai = new GoogleGenAI({ apiKey: apiKey || 'fallback_key_to_init' });
 
 export interface AIAnalysisResult extends MacroData {
   foodName: string;
@@ -15,12 +16,19 @@ export interface AIAnalysisResult extends MacroData {
 
 export const analyzeFoodImage = async (base64Image: string): Promise<AIAnalysisResult> => {
   try {
-    if (apiKey === 'placeholder_key_to_prevent_crash') {
-       throw new Error("API Key is missing. Please set the API_KEY environment variable.");
+    // Check for valid API key before making request
+    if (!apiKey || apiKey === 'fallback_key_to_init') {
+       console.error("API Key is missing.");
+       // Provide a helpful message directing the user to the free key source
+       throw new Error("Configuration Error: API Key is missing. Get a FREE key at https://aistudio.google.com/app/apikey and set it as API_KEY.");
     }
 
-    // Clean base64 string if it contains the data:image prefix
-    const cleanBase64 = base64Image.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, "");
+    // 1. Extract the actual MIME type from the base64 string (e.g., "image/png")
+    const mimeMatch = base64Image.match(/^data:(image\/[a-zA-Z+]+);base64,/);
+    const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
+
+    // 2. Clean base64 string by removing the data URL prefix
+    const cleanBase64 = base64Image.replace(/^data:image\/[a-zA-Z+]+;base64,/, "");
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
@@ -28,7 +36,7 @@ export const analyzeFoodImage = async (base64Image: string): Promise<AIAnalysisR
         parts: [
           {
             inlineData: {
-              mimeType: "image/jpeg",
+              mimeType: mimeType, // Use the detected mime type
               data: cleanBase64
             }
           },
@@ -65,8 +73,18 @@ export const analyzeFoodImage = async (base64Image: string): Promise<AIAnalysisR
     const result = JSON.parse(text) as AIAnalysisResult;
     return result;
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("AI Analysis failed:", error);
+    
+    // Check for common specific errors to give better feedback
+    let errorMessage = "Could not identify food. Please try again.";
+    
+    if (error.message?.includes("400") || error.message?.includes("INVALID_ARGUMENT")) {
+        errorMessage = "Image format error. Please try taking the photo again.";
+    } else if (error.message?.includes("API Key") || error.message?.includes("Configuration Error")) {
+        errorMessage = error.message; // Pass through our custom helpful message
+    }
+
     // Fallback error object
     return {
       foodName: "Unknown Food",
@@ -78,7 +96,7 @@ export const analyzeFoodImage = async (base64Image: string): Promise<AIAnalysisR
       sugar: 0,
       sodium: 0,
       cholesterol: 0,
-      description: "Could not identify food. Please try again.",
+      description: errorMessage,
       confidence: 0
     };
   }

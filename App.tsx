@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Utensils, Award, ChevronRight, Settings, Droplets, Plus, Minus, Bell, Moon, Smartphone, Flame, Carrot, Pizza, Apple, CheckCircle2, Lock, Sparkles, LogOut, User as UserIcon, Loader2, Mail, Lock as LockIcon, Eye, EyeOff, ArrowRight, ScanLine, Activity, Zap, Ruler, Weight, Target, Footprints, Trophy, X, Crown } from 'lucide-react';
+import { Utensils, Award, ChevronRight, Settings, Droplets, Plus, Minus, Bell, Moon, Smartphone, Flame, Carrot, Pizza, Apple, CheckCircle2, Lock, Sparkles, LogOut, User as UserIcon, Loader2, Mail, Lock as LockIcon, Eye, EyeOff, ArrowRight, ScanLine, Activity, Zap, Ruler, Weight, Target, Footprints, Trophy, X, Crown, TrendingUp, AlertCircle } from 'lucide-react';
 import { Button } from './components/Button';
 import { Navigation } from './components/Navigation';
 import { Card } from './components/Card';
@@ -534,83 +534,115 @@ const AchievementUnlockModal: React.FC<{
 
 // --- Sub-components ---
 
-const SemiCircleGauge: React.FC<{ 
-  current: number; 
-  max: number; 
-  label: string; 
-  color: string; 
-  subLabel: string;
-}> = ({ current, max, label, color, subLabel }) => {
-  const percentage = Math.min(100, Math.max(0, (current / max) * 100));
+const ConcentricActivityRings: React.FC<{
+  data: { label: string; current: number; target: number; color: string; }[]
+}> = ({ data }) => {
+  const [animate, setAnimate] = useState(false);
   
+  useEffect(() => {
+     // Small delay to ensure CSS transition triggers after mount
+     const timer = setTimeout(() => setAnimate(true), 150);
+     return () => clearTimeout(timer);
+  }, []);
+
+  const size = 260;
+  const center = size / 2;
+  const strokeWidth = 14;
+  const gap = 6;
+
   return (
-    <div className="flex flex-col items-center bg-white dark:bg-[#1C1C1E] rounded-2xl p-4 w-full shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 dark:border-gray-800 transform transition-all duration-200 active:scale-95 group hover:shadow-md">
-       <div className="relative w-24 h-14 overflow-hidden mb-1">
-          <svg viewBox="0 0 100 55" className="absolute top-0 left-0 w-full h-full">
-            <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#f3f4f6" className="dark:stroke-gray-700" strokeWidth="8" strokeLinecap="round" />
-            <path 
-               d="M 10 50 A 40 40 0 0 1 90 50" 
-               fill="none" 
-               stroke={color} 
-               strokeWidth="8" 
-               strokeLinecap="round" 
-               strokeDasharray="126" 
-               strokeDashoffset={126 - (126 * percentage / 100)}
-               className="transition-all duration-1000 ease-out group-hover:stroke-width-9"
-            />
-          </svg>
-          <div className="absolute bottom-0 left-0 w-full text-center mb-1">
-             <span className="text-sm font-bold text-gray-900 dark:text-white">{Math.round(current)}g</span>
-             <span className="text-[10px] text-gray-400 block font-medium">{subLabel}</span>
-          </div>
-       </div>
-       <span className="text-sm font-semibold text-center" style={{ color }}>{label}</span>
-    </div>
+     <div className="relative flex items-center justify-center w-[260px] h-[260px] mx-auto scale-90 sm:scale-100">
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="transform -rotate-90 overflow-visible">
+           {data.map((ring, i) => {
+              const radius = 100 - (i * (strokeWidth + gap));
+              const circumference = 2 * Math.PI * radius;
+              // Ensure we don't divide by zero
+              const target = ring.target || 1; 
+              const percent = Math.min(1, Math.max(0, ring.current / target));
+              // If animate is false (initial render), offset is full circumference (0% progress)
+              // If animate is true, offset is calculated based on progress
+              const offset = animate ? circumference - (percent * circumference) : circumference;
+              
+              return (
+                 <g key={i}>
+                    {/* Track */}
+                    <circle 
+                       cx={center} 
+                       cy={center} 
+                       r={radius} 
+                       fill="none" 
+                       stroke={ring.color} 
+                       strokeWidth={strokeWidth} 
+                       strokeOpacity={0.15}
+                    />
+                    {/* Progress */}
+                    <circle 
+                       cx={center} 
+                       cy={center} 
+                       r={radius} 
+                       fill="none" 
+                       stroke={ring.color} 
+                       strokeWidth={strokeWidth} 
+                       strokeDasharray={circumference}
+                       strokeDashoffset={offset}
+                       strokeLinecap="round"
+                       className="transition-all duration-[1.5s] ease-[cubic-bezier(0.2,0.8,0.2,1)]"
+                       style={{ 
+                          filter: `drop-shadow(0 0 4px ${ring.color})` 
+                       }}
+                    />
+                 </g>
+              );
+           })}
+        </svg>
+        {/* Center Text - Shows Calories */}
+         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+             <div className="text-4xl font-bold text-gray-900 dark:text-white tracking-tighter drop-shadow-lg transition-colors duration-500">
+                {Math.round(data[0].current)}
+             </div>
+             <div className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">kcal</div>
+         </div>
+     </div>
   );
 };
 
-const NutrientBar: React.FC<{
+const ModernNutrientBar: React.FC<{
    label: string;
    current: number;
    max: number;
    unit: string;
+   color: string;
    type?: 'target' | 'limit';
-   color?: string;
-}> = ({ label, current, max, unit, type = 'target', color }) => {
+}> = ({ label, current, max, unit, color, type = 'target' }) => {
    const percentage = Math.min(100, (current / max) * 100);
-   const isOver = current > max;
+   const isOver = type === 'limit' && current > max;
+   const displayColor = isOver ? '#FF453A' : color;
    
-   let barColor = color || (type === 'target' ? '#34C759' : '#FF9500'); 
-   if (type === 'limit' && isOver) barColor = '#FF3B30';
-
-   const remaining = max - current;
-   const statusText = type === 'limit' 
-      ? (remaining >= 0 ? `${Math.round(remaining)}${unit} left` : `${Math.round(Math.abs(remaining))}${unit} over`)
-      : (remaining > 0 ? `${Math.round(remaining)}${unit} left` : `${Math.round(Math.abs(remaining))}${unit} over`);
-
-   const statusPercent = Math.round((current / max) * 100);
-
    return (
-     <div className="bg-white dark:bg-[#1C1C1E] p-4 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 dark:border-gray-800 flex flex-col justify-between h-full transform transition-all duration-200 active:scale-95 group">
-        <div className="flex justify-between items-start mb-3">
-           <span className="font-semibold text-gray-700 dark:text-gray-200 text-[15px]">{label}</span>
-           <ChevronRight size={16} className="text-gray-300 dark:text-gray-600 group-hover:text-gray-500 transition-colors" />
+     <div className="bg-white dark:bg-white/5 backdrop-blur-lg rounded-2xl p-4 border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors shadow-sm">
+        <div className="flex justify-between items-end mb-2">
+           <span className="text-[13px] font-semibold text-gray-500 dark:text-gray-200">{label}</span>
+           <div className="text-xs">
+              <span className="font-bold text-gray-900 dark:text-white">{Math.round(current)}</span>
+              <span className="text-gray-400 dark:text-gray-500"> / {max}{unit}</span>
+           </div>
         </div>
         
-        <div>
-           <div className="h-2 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden mb-2">
-              <div 
-                className="h-full rounded-full transition-all duration-1000 relative overflow-hidden"
-                style={{ width: `${percentage}%`, backgroundColor: barColor }}
-              >
-                 <div className="absolute inset-0 bg-white/20 w-full animate-[shimmer_2s_infinite]" />
-              </div>
-           </div>
-           <div className="flex justify-between items-end">
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{statusText}</span>
-              <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{statusPercent}%</span>
+        <div className="h-2 w-full bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+           <div 
+             className="h-full rounded-full transition-all duration-1000 relative"
+             style={{ width: `${percentage}%`, backgroundColor: displayColor, boxShadow: `0 0 10px ${displayColor}40` }}
+           >
+              {/* Shimmer overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
            </div>
         </div>
+        
+        {isOver && (
+           <div className="flex items-center gap-1 mt-1.5 text-[#FF453A] text-[10px] font-bold uppercase tracking-wider animate-pulse">
+              <AlertCircle size={10} /> Limit Exceeded
+           </div>
+        )}
      </div>
    );
 };
@@ -870,7 +902,9 @@ const PremiumProfileView: React.FC<{
   };
 
   const handleTogglePref = (key: keyof typeof profile.preferences) => {
-    const newPrefs = { ...profile.preferences, [key]: !profile.preferences[key] };
+    // Ensure preferences object exists
+    const currentPrefs = profile.preferences || INITIAL_PROFILE.preferences;
+    const newPrefs = { ...currentPrefs, [key]: !currentPrefs[key] };
     onUpdate({ ...profile, preferences: newPrefs });
   };
 
@@ -934,9 +968,32 @@ const PremiumProfileView: React.FC<{
               </div>
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Consistency</h3>
               <div className="relative w-20 h-20 mx-auto mb-4">
-                 <svg className="w-full h-full transform -rotate-90">
-                   <circle cx="40" cy="40" r="36" stroke="currentColor" strokeWidth="6" className="text-gray-100 dark:text-gray-800" fill="none" />
-                   <circle cx="40" cy="40" r="36" stroke="#34C759" strokeWidth="6" strokeDasharray={2 * Math.PI * 36} strokeDashoffset={2 * Math.PI * 36 * 0.15} strokeLinecap="round" fill="none" className="transition-all duration-1000 shadow-[0_0_10px_#34C759]" />
+                 <svg viewBox="0 0 200 200" className="w-full h-full transform -rotate-90 overflow-visible">
+                    <defs>
+                        <linearGradient id="consistencyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="#34D399" />
+                            <stop offset="100%" stopColor="#10B981" />
+                        </linearGradient>
+                        <filter id="consistencyGlow" x="-40%" y="-40%" width="180%" height="180%">
+                            <feGaussianBlur stdDeviation="6" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                        </filter>
+                    </defs>
+                    {/* Track */}
+                    <circle cx="100" cy="100" r="80" stroke="currentColor" strokeWidth="16" className="text-gray-100 dark:text-gray-800" fill="none" />
+                    {/* Progress */}
+                    <circle 
+                        cx="100" cy="100" r="80" 
+                        stroke="url(#consistencyGradient)" 
+                        strokeWidth="16" 
+                        fill="none" 
+                        strokeDasharray={2 * Math.PI * 80}
+                        strokeDashoffset={2 * Math.PI * 80 * (1 - 0.85)} 
+                        strokeLinecap="round"
+                        style={{ filter: "url(#consistencyGlow)" }}
+                    />
+                    {/* Inner Decor */}
+                    <circle cx="100" cy="100" r="62" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4" className="text-gray-200 dark:text-gray-700" fill="none" />
                  </svg>
                  <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-gray-900 dark:text-white">85%</div>
               </div>
@@ -1343,56 +1400,84 @@ const ProgressDashboard: React.FC<{ log: DayLog, profile: UserProfile }> = ({ lo
   const totalSugar = log.items.reduce((acc, item) => acc + (item.sugar || 0), 0);
   const totalSodium = log.items.reduce((acc, item) => acc + (item.sodium || 0), 0);
   const totalCholesterol = log.items.reduce((acc, item) => acc + (item.cholesterol || 0), 0);
+  const totalCalories = log.items.reduce((acc, item) => acc + item.calories, 0);
+
+  // Data for Concentric Rings
+  const ringsData = [
+     { label: 'Calories', current: totalCalories, target: profile.targetCalories, color: '#FF2D55' },
+     { label: 'Protein', current: totalProtein, target: profile.targetProtein, color: '#34C759' },
+     { label: 'Carbs', current: totalCarbs, target: profile.targetCarbs, color: '#007AFF' },
+     { label: 'Fat', current: totalFat, target: profile.targetFat, color: '#FF9F0A' },
+  ];
 
   return (
-    <div className="h-full bg-[#F2F2F7] dark:bg-black overflow-y-auto pb-24 transition-colors duration-500">
-      <div className="bg-[#F2F2F7]/95 dark:bg-black/95 pt-safe px-5 pb-2 sticky top-0 z-40 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50">
-         <h1 className="text-[28px] font-bold text-center mt-2 mb-4 text-black dark:text-white">Nutritional Goals</h1>
+    <div className="h-full bg-[#F2F2F7] dark:bg-black text-gray-900 dark:text-white font-sans overflow-y-auto pb-24 relative transition-colors duration-500">
+       {/* Ambient Glow */}
+       <div className="absolute top-0 left-0 w-full h-64 bg-blue-500/5 dark:bg-blue-900/20 blur-3xl pointer-events-none"></div>
+
+      <div className="bg-[#F2F2F7]/95 dark:bg-black/95 pt-safe px-5 pb-4 sticky top-0 z-40 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 transition-colors duration-500">
+         <h1 className="text-3xl font-bold tracking-tight">Summary</h1>
+         <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+         </div>
       </div>
 
-      <div className="px-5 space-y-8 mt-4">
-         {/* Macros */}
-         <div>
-            <h2 className="text-[17px] font-semibold text-gray-900 dark:text-white mb-3">Macronutrient Goals</h2>
-            <div className="flex gap-3">
-               <SemiCircleGauge current={totalFat} max={profile.targetFat} label="Fat" color="#007AFF" subLabel="left" />
-               <SemiCircleGauge current={totalCarbs} max={profile.targetCarbs} label="Carbs" color="#FF9500" subLabel="left" />
-               <SemiCircleGauge current={totalProtein} max={profile.targetProtein} label="Protein" color="#FF2D55" subLabel="left" />
+      <div className="px-5 space-y-6 mt-4 relative z-10">
+         
+         {/* Hero Energy Rings Card */}
+         <div className="bg-white dark:bg-[#1C1C1E] rounded-[32px] p-6 relative overflow-hidden border border-gray-200 dark:border-white/5 shadow-sm transition-colors duration-500">
+            <div className="flex justify-between items-start mb-6">
+               <h2 className="text-lg font-bold">Energy Balance</h2>
+               <div className="bg-gray-100 dark:bg-white/10 px-3 py-1 rounded-full text-xs font-bold text-gray-600 dark:text-gray-300 transition-colors">
+                  {totalCalories} / {profile.targetCalories} kcal
+               </div>
+            </div>
+
+            <div className="py-4">
+               {/* NEW Concentric Rings */}
+               <ConcentricActivityRings data={ringsData} />
+            </div>
+
+            <div className="mt-6 flex justify-between px-2 text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-[#FF2D55] shadow-[0_0_8px_#FF2D55]"></div> Calories
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-[#34C759] shadow-[0_0_8px_#34C759]"></div> Protein
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-[#007AFF] shadow-[0_0_8px_#007AFF]"></div> Carbs
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-[#FF9F0A] shadow-[0_0_8px_#FF9F0A]"></div> Fat
+                </div>
             </div>
          </div>
 
-         {/* Target Nutrients */}
+         {/* Nutrient Grid */}
          <div>
-            <div className="flex justify-between items-baseline mb-3">
-               <div>
-                  <h2 className="text-[17px] font-semibold text-gray-900 dark:text-white">Target Nutrients</h2>
-                  <p className="text-gray-500 text-xs">Aim to meet or exceed</p>
-               </div>
-               <Settings size={20} className="text-gray-400" />
-            </div>
-            
+            <h2 className="text-lg font-bold mb-4 px-1">Micronutrients</h2>
             <div className="grid grid-cols-2 gap-3">
-               <NutrientBar label="Fiber" current={totalFiber} max={profile.targetFiber} unit="g" type="target" color="#34C759" />
-               <NutrientBar label="Protein" current={totalProtein} max={profile.targetProtein} unit="g" type="target" color="#FF2D55" />
+               <ModernNutrientBar label="Fiber" current={totalFiber} max={profile.targetFiber} unit="g" color="#30D158" />
+               <ModernNutrientBar label="Sugar" current={totalSugar} max={profile.targetSugar} unit="g" color="#FF9F0A" type="limit" />
+               <ModernNutrientBar label="Sodium" current={totalSodium} max={profile.maxSodium} unit="mg" color="#BF5AF2" type="limit" />
+               <ModernNutrientBar label="Cholesterol" current={totalCholesterol} max={profile.maxCholesterol} unit="mg" color="#FF375F" type="limit" />
             </div>
          </div>
 
-         {/* Limit Nutrients */}
-         <div>
-            <div className="flex justify-between items-baseline mb-3">
-               <div>
-                  <h2 className="text-[17px] font-semibold text-gray-900 dark:text-white">Limit Nutrients</h2>
-                  <p className="text-gray-500 text-xs">Aim to stay near or below</p>
-               </div>
-               <Settings size={20} className="text-gray-400" />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-               <NutrientBar label="Added Sugars" current={totalSugar} max={profile.targetSugar} unit="g" type="limit" color="#FF9500" />
-               <NutrientBar label="Cholesterol" current={totalCholesterol} max={profile.maxCholesterol} unit="mg" type="limit" color="#FF3B30" />
-               <NutrientBar label="Sodium" current={totalSodium} max={profile.maxSodium} unit="mg" type="limit" color="#FF9500" />
-               <NutrientBar label="Fat" current={totalFat} max={profile.targetFat} unit="g" type="limit" color="#007AFF" />
-            </div>
+         {/* Trends (Placeholder) */}
+         <div className="bg-white dark:bg-gradient-to-br dark:from-gray-900 dark:to-[#1C1C1E] rounded-[28px] p-6 border border-gray-200 dark:border-white/5 relative overflow-hidden group cursor-pointer shadow-sm transition-colors duration-500">
+             <div className="absolute inset-0 bg-gray-50 dark:bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+             <div className="flex items-center gap-4">
+                 <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-500/20 flex items-center justify-center text-blue-500 dark:text-blue-400 transition-colors">
+                     <TrendingUp size={24} />
+                 </div>
+                 <div>
+                     <h3 className="font-bold text-lg text-gray-900 dark:text-white">Weekly Trend</h3>
+                     <p className="text-gray-500 dark:text-gray-400 text-sm">You're hitting 90% of goals this week!</p>
+                 </div>
+                 <ChevronRight className="ml-auto text-gray-400 dark:text-gray-500" />
+             </div>
          </div>
       </div>
     </div>
@@ -1867,11 +1952,21 @@ const App: React.FC = () => {
       setIsAnalyzing(true);
       setCurrentView('CAMERA');
       
-      const result = await analyzeFoodImage(base64String);
-      setAnalysisResult(result);
-      setEditForm(result); 
-      setIsAnalyzing(false);
-      setCurrentView('REVIEW');
+      try {
+        const result = await analyzeFoodImage(base64String);
+        if (result.confidence === 0 && result.foodName === "Unknown Food") {
+          // Soft failure or API key error
+          alert(result.description); // Alert user about the specific issue (e.g. missing API key)
+        }
+        setAnalysisResult(result);
+        setEditForm(result); 
+        setCurrentView('REVIEW');
+      } catch (e) {
+        alert("Failed to analyze image. Please try again.");
+        setCurrentView('DASHBOARD');
+      } finally {
+        setIsAnalyzing(false);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -2251,30 +2346,61 @@ const App: React.FC = () => {
                  </div>
 
                  {/* Center: Ring */}
-                 <div className="relative w-40 h-40 flex items-center justify-center">
-                    {/* Background Circle */}
-                    <div className="absolute inset-0 rounded-full border-[8px] border-white/10"></div>
-                    
-                    {/* Animated Progress Circle */}
-                    <svg className="absolute inset-0 w-full h-full transform -rotate-90 ring-breathe">
-                       <circle
-                          cx="80"
-                          cy="80"
-                          r="70"
-                          fill="transparent"
-                          stroke="white"
-                          strokeWidth="8"
-                          strokeDasharray={2 * Math.PI * 70}
-                          strokeDashoffset={2 * Math.PI * 70 * (1 - Math.min(1, totalCalories / profile.targetCalories))}
-                          strokeLinecap="round"
-                          className="transition-all duration-1000 ease-out"
-                       />
+                 <div className="relative w-44 h-44 flex items-center justify-center">
+                    <svg viewBox="0 0 200 200" className="w-full h-full transform -rotate-90 drop-shadow-2xl overflow-visible">
+                        <defs>
+                            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="#34D399" />
+                                <stop offset="100%" stopColor="#ffffff" />
+                            </linearGradient>
+                            <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+                                <feGaussianBlur stdDeviation="4" result="blur" />
+                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                            </filter>
+                        </defs>
+
+                        {/* Track */}
+                        <circle
+                            cx="100"
+                            cy="100"
+                            r="80"
+                            fill="none"
+                            stroke="rgba(255,255,255,0.1)"
+                            strokeWidth="14"
+                            strokeLinecap="round"
+                        />
+
+                        {/* Progress */}
+                        <circle
+                            cx="100"
+                            cy="100"
+                            r="80"
+                            fill="none"
+                            stroke="url(#progressGradient)"
+                            strokeWidth="14"
+                            strokeDasharray={2 * Math.PI * 80}
+                            strokeDashoffset={2 * Math.PI * 80 * (1 - Math.min(1, totalCalories / profile.targetCalories))}
+                            strokeLinecap="round"
+                            className="transition-all duration-1000 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                            style={{ filter: "url(#glow)" }}
+                        />
+                        
+                        {/* Inner Decor Ring */}
+                        <circle
+                            cx="100"
+                            cy="100"
+                            r="65"
+                            fill="none"
+                            stroke="rgba(255,255,255,0.1)"
+                            strokeWidth="1"
+                            strokeDasharray="4 4"
+                        />
                     </svg>
 
                     {/* Center Text */}
-                    <div className="text-center z-10">
-                       <div className="text-4xl font-bold tracking-tighter shadow-black/20 drop-shadow-lg">{remainingCalories}</div>
-                       <div className="text-[10px] font-bold text-emerald-200/80 uppercase tracking-widest mt-1">Kcal Left</div>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+                       <div className="text-4xl font-bold tracking-tighter text-white drop-shadow-md">{remainingCalories}</div>
+                       <div className="text-[10px] font-bold text-emerald-100 uppercase tracking-widest mt-1">Kcal Left</div>
                     </div>
                  </div>
 
