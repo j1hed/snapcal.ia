@@ -900,7 +900,7 @@ const PremiumCard: React.FC<{ isPremium: boolean; onUpgrade?: () => void }> = ({
 
                     <div className="flex flex-col items-end mr-4">
                          <div className="text-[0.55rem] text-gray-400 uppercase tracking-widest mb-0.5">Valid Thru</div>
-                         <div className="font-mono text-sm text-gray-200">DEC/15</div>
+                         <div className="font-mono text-sm text-gray-200">DEC/25</div>
                     </div>
 
                     {/* Visa/Mastercard Logo Simulation */}
