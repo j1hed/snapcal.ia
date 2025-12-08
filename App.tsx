@@ -172,7 +172,7 @@ const LiquidBackground: React.FC = () => {
 
 // 2. ROTATING LOGO (New Cinematic Aluminum/Glass Effect)
 import React, { useState, useEffect } from "react";
-import { ScanLine, Carrot, Pizza, Apple } from "your-icon-source";
+import { ScanLine, Carrot,, Apple } from "your-icon-source";
 
 const RotatingLogo: React.FC = () => {
    const [index, setIndex] = useState(0);
