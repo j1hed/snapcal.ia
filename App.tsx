@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Utensils, Award, ChevronRight, Settings, Droplets, Plus, Minus, Bell, Moon, Smartphone, Flame, Carrot, Pizza, Apple, CheckCircle2, Lock, Sparkles, LogOut, User as UserIcon, Loader2, Mail, Lock as LockIcon, Eye, EyeOff, ArrowRight, ScanLine, Activity, Zap, Ruler, Weight, Target, Footprints, Trophy, X, Crown, TrendingUp, AlertCircle } from 'lucide-react';
+import { Utensils, Award, ChevronRight, Settings, Droplets, Plus, Minus, Bell, Moon, Smartphone, Flame, Carrot, Pizza, Apple, CheckCircle2, Lock, Sparkles, LogOut, User as UserIcon, Loader2, Mail, Lock as LockIcon, Eye, EyeOff, ArrowRight, ScanLine, Activity, Zap, Ruler, Weight, Target, Footprints, Trophy, X, Crown, TrendingUp, AlertCircle, FileText, Wifi, QrCode } from 'lucide-react';
 import { Button } from './components/Button';
 import { Navigation } from './components/Navigation';
 import { Card } from './components/Card';
+import { WeekCalendar } from './components/WeekCalendar';
 import { analyzeFoodImage, AIAnalysisResult } from './services/geminiService';
 import { supabase } from './services/supabaseClient';
 import { 
@@ -95,6 +97,7 @@ const INITIAL_PROFILE: UserProfile = {
   preferences: {
     darkMode: false,
     notifications: true,
+    weeklyReports: false,
     healthSync: false,
     unlockedAwards: []
   }
@@ -140,122 +143,145 @@ const calculateMacros = (profile: UserProfile): UserProfile => {
 
 // --- Animation Components ---
 
-const FireflyParticles: React.FC = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    const particles: any[] = [];
-    const count = 40;
-
-    for (let i = 0; i < count; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        size: Math.random() * 2 + 0.5,
-        opacity: Math.random(),
-        fadeSpeed: Math.random() * 0.02 + 0.005,
-        fadingIn: Math.random() > 0.5
-      });
-    }
-
-    let animationId: number;
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+// 1. LIQUID BACKGROUND (New Innovative Auth Background)
+const LiquidBackground: React.FC = () => {
+  return (
+    <div className="absolute inset-0 bg-black overflow-hidden z-0">
+      <svg className="hidden">
+        <defs>
+          <filter id="goo">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
+            <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+          </filter>
+        </defs>
+      </svg>
+      <div className="absolute inset-0 w-full h-full" style={{ filter: 'url(#goo)' }}>
+        <div className="absolute top-[10%] left-[10%] w-72 h-72 bg-blue-600 rounded-full mix-blend-screen opacity-70 animate-blob-bounce delay-0"></div>
+        <div className="absolute top-[40%] right-[10%] w-80 h-80 bg-purple-600 rounded-full mix-blend-screen opacity-70 animate-blob-bounce delay-2000"></div>
+        <div className="absolute bottom-[10%] left-[30%] w-64 h-64 bg-indigo-600 rounded-full mix-blend-screen opacity-70 animate-blob-bounce delay-4000"></div>
+        <div className="absolute top-[20%] right-[30%] w-48 h-48 bg-cyan-600 rounded-full mix-blend-screen opacity-70 animate-blob-bounce delay-1000"></div>
+      </div>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[80px]"></div>
       
-      particles.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        
-        // Wrap around screen
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        if (p.y > canvas.height) p.y = 0;
-
-        // Pulse opacity
-        if (p.fadingIn) {
-           p.opacity += p.fadeSpeed;
-           if (p.opacity >= 1) p.fadingIn = false;
-        } else {
-           p.opacity -= p.fadeSpeed;
-           if (p.opacity <= 0.1) p.fadingIn = true;
-        }
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 220, 100, ${p.opacity})`;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = "rgba(255, 220, 100, 0.8)";
-        ctx.fill();
-        ctx.shadowBlur = 0;
-      });
-
-      animationId = requestAnimationFrame(animate);
-    };
-    animate();
-
-    return () => {
-      window.removeEventListener('resize', resize);
-      cancelAnimationFrame(animationId);
-    };
-  }, []);
-
-  return <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />;
+      {/* Interactive Grid Overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_100%)]"></div>
+    </div>
+  );
 };
 
-const FloatingFoodBackground: React.FC = () => {
-   const foods = ['🥗', '🥩', '🥑', '🫐', '🥚', '🥪', '🍎', '🥦'];
-   const items = useMemo(() => Array.from({ length: 15 }).map((_, i) => ({
-      id: i,
-      icon: foods[i % foods.length],
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      scale: Math.random() * 0.5 + 0.5,
-      blur: Math.random() * 4,
-      duration: Math.random() * 20 + 20,
-      delay: Math.random() * -20
-   })), []);
+// 2. ROTATING LOGO (New Cinematic Aluminum/Glass Effect)
+const RotatingLogo: React.FC = () => {
+   const [index, setIndex] = useState(0);
+   const icons = [ScanLine, Carrot, Pizza, Apple];
+   const CurrentIcon = icons[index];
+
+   useEffect(() => {
+      const interval = setInterval(() => {
+         setIndex(prev => (prev + 1) % icons.length);
+      }, 3000);
+      return () => clearInterval(interval);
+   }, []);
 
    return (
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-         {items.map(item => (
-            <div 
-               key={item.id}
-               className="absolute text-4xl opacity-10 animate-float-slow"
-               style={{
-                  left: `${item.left}%`,
-                  top: `${item.top}%`,
-                  transform: `scale(${item.scale})`,
-                  filter: `blur(${item.blur}px)`,
-                  animationDuration: `${item.duration}s`,
-                  animationDelay: `${item.delay}s`
-               }}
-            >
-               {item.icon}
+      <div className="relative w-24 h-24 mx-auto mb-8 perspective-1000">
+         <div className="w-full h-full relative transform-style-3d animate-[spin-y-continuous_8s_linear_infinite]">
+            {/* Front Face (Current Icon) */}
+            <div className="absolute inset-0 backface-visible">
+               <div className="w-full h-full rounded-[28px] bg-gradient-to-br from-gray-200 to-gray-400 flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.1)] relative overflow-hidden border border-white/20">
+                  {/* Brushed Metal Texture */}
+                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/brushed-alum.png')] opacity-50 mix-blend-overlay"></div>
+                  {/* Glass Sheen */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-white/40 via-transparent to-black/10 z-10 rounded-[28px]"></div>
+                  
+                  <div className="relative z-20 text-gray-800 drop-shadow-md transform transition-all duration-500">
+                     <CurrentIcon size={44} strokeWidth={1.5} />
+                  </div>
+
+                  {/* Laser Scanner */}
+                  <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-transparent via-blue-400/50 to-transparent w-full animate-[scan-vertical_2s_ease-in-out_infinite] z-30 mix-blend-screen blur-[2px]"></div>
+               </div>
             </div>
-         ))}
-         <style>{`
-            @keyframes float-slow {
-               0% { transform: translate(0, 0) rotate(0deg); }
-               33% { transform: translate(30px, -50px) rotate(10deg); }
-               66% { transform: translate(-20px, 20px) rotate(-5deg); }
-               100% { transform: translate(0, 0) rotate(0deg); }
-            }
-         `}</style>
+            
+            {/* Back Face (Duplicate for 360 illusion) */}
+            <div className="absolute inset-0 backface-visible rotate-y-180">
+               <div className="w-full h-full rounded-[28px] bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center shadow-lg relative overflow-hidden border border-white/20">
+                   <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/brushed-alum.png')] opacity-50 mix-blend-overlay"></div>
+                   <div className="relative z-20 text-gray-700">
+                      <ScanLine size={44} strokeWidth={1.5} />
+                   </div>
+               </div>
+            </div>
+         </div>
+         
+         {/* Reflection */}
+         <div className="absolute -bottom-8 left-0 right-0 h-8 bg-gradient-to-b from-white/20 to-transparent blur-md transform scale-y-[-1] opacity-30 mask-image-fade"></div>
+      </div>
+   );
+};
+
+// 3. MAGNETIC BUTTON (Micro-interaction)
+const MagneticButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'ghost' }> = ({ children, variant = 'primary', className = '', ...props }) => {
+   const btnRef = useRef<HTMLButtonElement>(null);
+   const [pos, setPos] = useState({ x: 0, y: 0 });
+
+   const handleMouseMove = (e: React.MouseEvent) => {
+      if (!btnRef.current) return;
+      const rect = btnRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      setPos({ x: x * 0.2, y: y * 0.2 }); // Magnetic strength
+   };
+
+   const handleMouseLeave = () => {
+      setPos({ x: 0, y: 0 });
+   };
+
+   const baseStyles = "relative overflow-hidden transition-all duration-200 ease-out active:scale-95";
+   const variants = {
+      primary: "bg-[#007AFF] text-white shadow-[0_10px_30px_rgba(0,122,255,0.4)] hover:shadow-[0_10px_40px_rgba(0,122,255,0.6)]",
+      ghost: "bg-transparent text-gray-400 hover:text-white"
+   };
+
+   return (
+      <button 
+         ref={btnRef}
+         className={`${baseStyles} ${variants[variant]} ${className}`}
+         onMouseMove={handleMouseMove}
+         onMouseLeave={handleMouseLeave}
+         style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
+         {...props}
+      >
+         {children}
+      </button>
+   );
+};
+
+const TiltCard: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => {
+   const cardRef = useRef<HTMLDivElement>(null);
+   const [transform, setTransform] = useState('');
+
+   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!cardRef.current) return;
+      const { left, top, width, height } = cardRef.current.getBoundingClientRect();
+      const x = (e.clientX - left - width / 2) / 25;
+      const y = (e.clientY - top - height / 2) / 25;
+      setTransform(`perspective(1000px) rotateX(${-y}deg) rotateY(${x}deg) scale(1.01)`);
+   };
+
+   const handleMouseLeave = () => {
+      setTransform('perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)');
+   };
+
+   return (
+      <div 
+         ref={cardRef}
+         className={`transition-transform duration-200 ease-out ${className}`}
+         style={{ transform }}
+         onMouseMove={handleMouseMove}
+         onMouseLeave={handleMouseLeave}
+      >
+         {children}
       </div>
    );
 };
@@ -273,9 +299,8 @@ const GoldenParticleBurst: React.FC = () => {
     canvas.height = window.innerHeight;
 
     const particles: any[] = [];
-    const colors = ['#FFD700', '#FFA500', '#FFFFFF', '#FDB931']; // Gold palette
+    const colors = ['#FFD700', '#FFA500', '#FFFFFF', '#FDB931'];
 
-    // Create explosion from center
     for (let i = 0; i < 150; i++) {
       const angle = Math.random() * Math.PI * 2;
       const velocity = Math.random() * 15 + 5;
@@ -303,7 +328,7 @@ const GoldenParticleBurst: React.FC = () => {
           p.x += p.vx;
           p.y += p.vy;
           p.vx *= p.friction;
-          p.vy += p.gravity; // Gravity pulls them down
+          p.vy += p.gravity;
           p.alpha -= p.decay;
 
           ctx.save();
@@ -313,7 +338,6 @@ const GoldenParticleBurst: React.FC = () => {
           ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
           ctx.fill();
           
-          // Add "shine" to some particles
           if (Math.random() > 0.9) {
              ctx.fillStyle = '#FFFFFF';
              ctx.beginPath();
@@ -405,21 +429,7 @@ const Confetti: React.FC<{ active: boolean }> = ({ active }) => {
   return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-[100]" />;
 };
 
-const LiquidProgressBar: React.FC<{ progress: number }> = ({ progress }) => {
-  return (
-    <div className="relative h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-      <div 
-        className="absolute top-0 left-0 h-full bg-[#007AFF] transition-all duration-700 ease-out"
-        style={{ width: `${progress}%` }}
-      >
-        <div className="absolute top-0 left-0 right-0 bottom-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-full animate-shimmer" />
-      </div>
-    </div>
-  );
-};
-
 const ParticleSystem: React.FC = () => {
-  // Generate random particles
   const particles = useMemo(() => Array.from({ length: 12 }).map((_, i) => ({
     id: i,
     left: `${Math.random() * 100}%`,
@@ -442,54 +452,9 @@ const ParticleSystem: React.FC = () => {
           }}
         />
       ))}
-      <style>{`
-        @keyframes float-particle {
-          0%, 100% { transform: translateY(0) scale(0); opacity: 0; }
-          50% { transform: translateY(-20px) scale(1); opacity: 0.8; }
-        }
-      `}</style>
     </div>
   );
 };
-
-const MorphingFoodIcon: React.FC = () => {
-  const [index, setIndex] = useState(0);
-  const icons = [Utensils, Pizza, Apple, Carrot];
-  
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIndex(prev => (prev + 1) % icons.length);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const CurrentIcon = icons[index];
-
-  return (
-    <div className="relative w-20 h-20">
-      {icons.map((Icon, i) => (
-         <div 
-            key={i} 
-            className={`absolute inset-0 flex items-center justify-center transition-all duration-700 transform ${
-               i === index ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 rotate-180'
-            }`}
-         >
-             <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[22px] flex items-center justify-center shadow-2xl shadow-blue-900/50">
-                <Icon className="text-white w-10 h-10" />
-             </div>
-         </div>
-      ))}
-    </div>
-  );
-};
-
-const AuroraBackground: React.FC = () => (
-  <div className="absolute inset-0 bg-black z-0 overflow-hidden">
-    <div className="absolute inset-0 bg-gradient-to-b from-indigo-950 via-slate-950 to-black opacity-90"></div>
-    <div className="absolute top-[-20%] left-[-20%] w-[140%] h-[80%] bg-blue-600/20 blur-[100px] animate-aurora rounded-full mix-blend-screen pointer-events-none"></div>
-    <div className="absolute bottom-[-10%] right-[-10%] w-[100%] h-[60%] bg-purple-600/20 blur-[100px] animate-aurora-rev rounded-full mix-blend-screen pointer-events-none"></div>
-  </div>
-);
 
 const AchievementUnlockModal: React.FC<{ 
   achievement: AchievementDef | null; 
@@ -532,6 +497,27 @@ const AchievementUnlockModal: React.FC<{
   );
 };
 
+const TunisiaFlag: React.FC<{ className?: string }> = ({ className = '' }) => (
+   <div className={`relative bg-[#E70013] overflow-hidden flex items-center justify-center ${className}`}>
+      <div className="w-1/2 h-1/2 bg-white rounded-full flex items-center justify-center">
+         <div className="relative w-3/4 h-3/4">
+            <div className="absolute inset-0 rounded-full border-[3px] border-[#E70013] mask-moon" style={{ clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }}></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2/3 h-2/3 bg-[#E70013] rounded-full flex items-center justify-center">
+               <div className="w-1 h-1 bg-white rounded-full mb-1"></div> 
+            </div>
+            {/* Simple star approximation */}
+            <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-[#E70013] -translate-y-1/2 translate-x-1 rotate-45"></div>
+         </div>
+      </div>
+      <div className="absolute inset-0 bg-white rounded-full w-[40%] h-[40%] flex items-center justify-center">
+          <div className="relative w-full h-full">
+             <div className="absolute w-[80%] h-[80%] rounded-full border-4 border-[#E70013] top-[10%] left-[10%] clip-crescent"></div>
+             <div className="absolute w-[40%] h-[40%] bg-[#E70013] left-[45%] top-[30%] star-shape"></div>
+          </div>
+      </div>
+   </div>
+);
+
 // --- Sub-components ---
 
 const ConcentricActivityRings: React.FC<{
@@ -540,7 +526,6 @@ const ConcentricActivityRings: React.FC<{
   const [animate, setAnimate] = useState(false);
   
   useEffect(() => {
-     // Small delay to ensure CSS transition triggers after mount
      const timer = setTimeout(() => setAnimate(true), 150);
      return () => clearTimeout(timer);
   }, []);
@@ -556,16 +541,12 @@ const ConcentricActivityRings: React.FC<{
            {data.map((ring, i) => {
               const radius = 100 - (i * (strokeWidth + gap));
               const circumference = 2 * Math.PI * radius;
-              // Ensure we don't divide by zero
               const target = ring.target || 1; 
               const percent = Math.min(1, Math.max(0, ring.current / target));
-              // If animate is false (initial render), offset is full circumference (0% progress)
-              // If animate is true, offset is calculated based on progress
               const offset = animate ? circumference - (percent * circumference) : circumference;
               
               return (
                  <g key={i}>
-                    {/* Track */}
                     <circle 
                        cx={center} 
                        cy={center} 
@@ -575,7 +556,6 @@ const ConcentricActivityRings: React.FC<{
                        strokeWidth={strokeWidth} 
                        strokeOpacity={0.15}
                     />
-                    {/* Progress */}
                     <circle 
                        cx={center} 
                        cy={center} 
@@ -595,7 +575,6 @@ const ConcentricActivityRings: React.FC<{
               );
            })}
         </svg>
-        {/* Center Text - Shows Calories */}
          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
              <div className="text-4xl font-bold text-gray-900 dark:text-white tracking-tighter drop-shadow-lg transition-colors duration-500">
                 {Math.round(data[0].current)}
@@ -633,7 +612,6 @@ const ModernNutrientBar: React.FC<{
              className="h-full rounded-full transition-all duration-1000 relative"
              style={{ width: `${percentage}%`, backgroundColor: displayColor, boxShadow: `0 0 10px ${displayColor}40` }}
            >
-              {/* Shimmer overlay */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
            </div>
         </div>
@@ -651,12 +629,11 @@ const WaterTracker: React.FC<{
   intake: number; 
   onAdd: (amount: number) => void; 
 }> = ({ intake, onAdd }) => {
-  const goal = 2500; // ml
+  const goal = 2500;
   const percentage = Math.min(100, (intake / goal) * 100);
 
   return (
     <Card className="p-5 overflow-hidden relative dark:bg-[#1C1C1E] dark:border-gray-800" isPressable>
-      {/* Background Wave Animation */}
       <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-blue-50/50 dark:bg-blue-900/10 rounded-b-[20px] pointer-events-none -z-0">
           <svg className="absolute bottom-0 w-full h-full text-blue-100/50 dark:text-blue-800/20" viewBox="0 0 1440 320" preserveAspectRatio="none">
               <path fill="currentColor" fillOpacity="1" d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
@@ -715,7 +692,6 @@ const AwardsView: React.FC<{ profile: UserProfile }> = ({ profile }) => {
          </div>
          
          <div className="px-5 mt-4 space-y-8">
-            {/* Virtual Coach */}
             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[24px] p-1 text-white shadow-lg transform hover:scale-[1.01] transition-transform">
                <div className="bg-white/10 backdrop-blur-md rounded-[22px] p-5 flex items-start gap-4">
                   <div className="w-14 h-14 rounded-full bg-white border-2 border-white/50 flex items-center justify-center shrink-0 shadow-inner">
@@ -730,7 +706,6 @@ const AwardsView: React.FC<{ profile: UserProfile }> = ({ profile }) => {
                </div>
             </div>
 
-            {/* Achievement Museum */}
             <div>
                <h2 className="text-[20px] font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                   Achievement Museum <Sparkles size={18} className="text-yellow-500" />
@@ -741,7 +716,6 @@ const AwardsView: React.FC<{ profile: UserProfile }> = ({ profile }) => {
                      return (
                      <div key={ach.id} className="group perspective-1000 h-40 cursor-pointer">
                         <div className={`relative w-full h-full transition-all duration-500 transform-style-3d group-hover:rotate-y-180`}>
-                           {/* Front */}
                            <div className={`absolute inset-0 backface-hidden rounded-2xl p-4 flex flex-col items-center justify-center border shadow-sm dark:bg-[#1C1C1E] dark:border-gray-800 ${!isUnlocked ? 'bg-gray-100 border-gray-200 dark:bg-[#1C1C1E] dark:border-gray-800' : 'bg-white border-yellow-100 shadow-yellow-100/50'}`}>
                               <div className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-3 shadow-sm ${!isUnlocked ? 'bg-gray-200 dark:bg-gray-700 grayscale opacity-50' : 'bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/50 dark:to-orange-900/50'}`}>
                                  {!isUnlocked ? <Lock size={24} className="text-gray-400" /> : ach.icon}
@@ -749,7 +723,6 @@ const AwardsView: React.FC<{ profile: UserProfile }> = ({ profile }) => {
                               <span className={`font-bold text-sm text-center ${!isUnlocked ? 'text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>{ach.title}</span>
                            </div>
                            
-                           {/* Back */}
                            <div className="absolute inset-0 backface-hidden rotate-y-180 bg-[#007AFF] rounded-2xl p-4 flex flex-col items-center justify-center text-white shadow-lg">
                               <p className="text-center text-sm font-medium leading-relaxed">{ach.desc}</p>
                               {!isUnlocked ? (
@@ -764,13 +737,6 @@ const AwardsView: React.FC<{ profile: UserProfile }> = ({ profile }) => {
                </div>
             </div>
          </div>
-         <style>{`
-            .perspective-1000 { perspective: 1000px; }
-            .transform-style-3d { transform-style: preserve-3d; }
-            .backface-hidden { backface-visibility: hidden; }
-            .rotate-y-180 { transform: rotateY(180deg); }
-            .group-hover\\:rotate-y-180:hover { transform: rotateY(180deg); }
-         `}</style>
       </div>
    );
 };
@@ -804,80 +770,124 @@ const Switch: React.FC<{
 };
 
 const PremiumCard: React.FC<{ isPremium: boolean; onUpgrade?: () => void }> = ({ isPremium, onUpgrade }) => {
-   return (
-      <div className="relative group perspective-1000 h-48 w-full cursor-pointer" onClick={isPremium ? undefined : onUpgrade}>
-         <div className={`relative w-full h-full rounded-[24px] overflow-hidden transition-transform duration-500 shadow-xl ${isPremium ? 'bg-gradient-to-br from-gray-900 to-black text-white' : 'bg-gradient-to-br from-[#007AFF] to-[#0055FF] text-white'}`}>
-            
-            {/* Holographic/Shine Effect */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent w-[200%] h-full animate-shimmer-fast pointer-events-none skew-x-12 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            
-            {/* Content */}
-            <div className="absolute inset-0 p-6 flex flex-col justify-between z-10">
-               <div className="flex justify-between items-start">
-                  <div>
-                     {isPremium ? (
-                        <div className="flex items-center gap-2 text-yellow-400 font-bold tracking-widest uppercase text-xs mb-1">
-                           <Crown size={14} fill="currentColor" /> Elite Member
-                        </div>
-                     ) : (
-                        <div className="font-bold tracking-widest uppercase text-xs mb-1 text-blue-200">
-                           Free Plan
-                        </div>
-                     )}
-                     <h3 className="text-2xl font-serif font-bold tracking-wide">
-                        {isPremium ? 'SnapCalorie Black' : 'Upgrade to Pro'}
-                     </h3>
-                  </div>
-                  {/* Chip Icon */}
-                  <div className="w-10 h-8 rounded-md bg-gradient-to-br from-yellow-200 to-yellow-500 opacity-80 border border-yellow-600/30 flex items-center justify-center">
-                     <div className="w-full h-[1px] bg-yellow-700/50 mb-[2px]"></div>
-                     <div className="w-full h-[1px] bg-yellow-700/50 mb-[2px]"></div>
-                     <div className="w-full h-[1px] bg-yellow-700/50"></div>
-                  </div>
-               </div>
+   const cardRef = useRef<HTMLDivElement>(null);
+   const [transform, setTransform] = useState('');
 
-               {isPremium ? (
-                  <div className="flex justify-between items-end">
-                     <div>
-                        <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Valid Thru</div>
-                        <div className="font-mono text-lg">12/25</div>
-                     </div>
-                     <div className="font-mono tracking-widest text-sm text-gray-400">•••• 4291</div>
-                  </div>
-               ) : (
-                  <div>
-                     <div className="space-y-1 mb-4">
-                        <div className="flex items-center gap-2 text-sm text-blue-100"><CheckCircle2 size={12} /> Unlimited AI Logging</div>
-                        <div className="flex items-center gap-2 text-sm text-blue-100"><CheckCircle2 size={12} /> Advanced Analytics</div>
-                     </div>
-                     <button className="bg-white text-[#007AFF] px-4 py-2 rounded-full text-xs font-bold shadow-lg w-full hover:bg-gray-50 transition-colors">
-                        Get Premium
-                     </button>
-                  </div>
-               )}
+   // 3D Tilt Logic
+   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+     if (!cardRef.current) return;
+     const { left, top, width, height } = cardRef.current.getBoundingClientRect();
+     const x = (e.clientX - left - width / 2) / 20; // Heavier divisor
+     const y = (e.clientY - top - height / 2) / 20;
+     setTransform(`perspective(1000px) rotateX(${-y}deg) rotateY(${x}deg) scale(1.02)`);
+   };
+
+   const handleMouseLeave = () => {
+     setTransform('perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)');
+   };
+
+   return (
+      <div className="perspective-1000 w-full h-56 cursor-pointer group" onClick={isPremium ? undefined : onUpgrade}>
+         <div 
+            ref={cardRef}
+            className="relative w-full h-full rounded-xl transition-transform duration-100 ease-out shadow-2xl overflow-hidden"
+            style={{ 
+               transform: transform,
+               transformStyle: 'preserve-3d',
+               background: 'radial-gradient(circle at 50% 30%, #2a2a2a, #0a0a0a)',
+               boxShadow: '0 10px 30px -10px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(212, 175, 55, 0.3), 0 0 0 1px rgba(20, 20, 20, 1)'
+            }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+         >
+            {/* Noise Texture */}
+            <div className="absolute inset-0 opacity-[0.05] pointer-events-none z-0" 
+                 style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}>
             </div>
 
-            {/* Decor */}
-            <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
+            {/* Subtle Geometric Pattern */}
+            <div className="absolute inset-0 opacity-[0.03] z-0"
+                 style={{ backgroundImage: 'linear-gradient(45deg, #ffffff 25%, transparent 25%, transparent 75%, #ffffff 75%, #ffffff), linear-gradient(45deg, #ffffff 25%, transparent 25%, transparent 75%, #ffffff 75%, #ffffff)', backgroundSize: '60px 60px', backgroundPosition: '0 0, 30px 30px' }}>
+            </div>
+
+            {/* Shine Bar */}
+            <div className="absolute inset-0 z-10 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-[-15deg] animate-shimmer-fast pointer-events-none"></div>
+
+            <div className="relative z-20 h-full p-6 flex flex-col justify-between">
+                
+                {/* Header */}
+                <div className="flex justify-between items-start">
+                    <div className="flex flex-col">
+                        <span className="font-serif text-2xl font-bold tracking-widest drop-shadow-sm" 
+                              style={{ 
+                                  background: 'linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7)',
+                                  WebkitBackgroundClip: 'text',
+                                  backgroundClip: 'text',
+                                  color: 'transparent',
+                                  textShadow: '0px 1px 2px rgba(0,0,0,0.5)'
+                              }}>
+                            SNAPCAL.AI
+                        </span>
+                        <div className="flex items-center gap-2 mt-1">
+                             <Crown size={12} className="text-[#d4af37]" fill="currentColor" />
+                             <span className="font-semibold uppercase text-[#d4af37]" style={{ fontSize: '0.7rem', letterSpacing: '0.2em' }}>
+                                 ELITE MEMBERSHIP
+                             </span>
+                        </div>
+                    </div>
+                    
+                    <div className="opacity-80 text-[#d4af37]">
+                        <Wifi size={24} className="rotate-90" />
+                    </div>
+                </div>
+
+                {/* Chip & Number */}
+                <div className="flex items-center gap-6 mt-2">
+                    {/* Custom Chip */}
+                    <div className="w-12 h-9 rounded-md relative overflow-hidden flex items-center justify-center border border-amber-600/50 shadow-inner"
+                         style={{ background: 'linear-gradient(135deg, #d4af37 0%, #a67c00 100%)' }}>
+                        <div className="absolute w-full h-[1px] bg-black/20 top-1/2"></div>
+                        <div className="absolute h-full w-[1px] bg-black/20 left-1/2"></div>
+                        <div className="w-6 h-4 border border-black/20 rounded-[2px] z-10"></div>
+                    </div>
+                    
+                    <div className="font-mono text-xl tracking-widest text-gray-200 drop-shadow-md" style={{ wordSpacing: '0.2em' }}>
+                        5424 1801 2345 6789
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="flex justify-between items-end">
+                    <div className="flex flex-col">
+                        <div className="text-[0.55rem] text-gray-400 uppercase tracking-widest mb-0.5">Cardholder</div>
+                        <div className="font-serif text-sm tracking-widest text-gray-200 uppercase font-bold shadow-black drop-shadow-sm">
+                            JIHAAD
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col items-end mr-4">
+                         <div className="text-[0.55rem] text-gray-400 uppercase tracking-widest mb-0.5">Valid Thru</div>
+                         <div className="font-mono text-sm text-gray-200">12/28</div>
+                    </div>
+
+                    {/* Visa/Mastercard Logo Simulation */}
+                    <div className="flex -space-x-3 opacity-90">
+                       <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm"></div>
+                       <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm"></div>
+                    </div>
+                </div>
+            </div>
          </div>
-         <style>{`
-            @keyframes shimmer-fast {
-               0% { transform: translateX(-150%) skewX(-12deg); }
-               100% { transform: translateX(150%) skewX(-12deg); }
-            }
-            .animate-shimmer-fast {
-               animation: shimmer-fast 3s infinite linear;
-            }
-         `}</style>
       </div>
    );
 };
 
 const PremiumProfileView: React.FC<{ 
   profile: UserProfile; 
+  weeklyStats: number[];
   onUpdate: (p: UserProfile) => void;
   onLogout: () => void;
-}> = ({ profile, onUpdate, onLogout }) => {
+}> = ({ profile, weeklyStats, onUpdate, onLogout }) => {
   const [timeOfDay, setTimeOfDay] = useState<'morning' | 'afternoon' | 'evening'>('morning');
 
   useEffect(() => {
@@ -895,24 +905,16 @@ const PremiumProfileView: React.FC<{
     }
   };
 
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
-
-  const toggleSection = (section: string) => {
-    setExpandedSection(expandedSection === section ? null : section);
-  };
-
   const handleTogglePref = (key: keyof typeof profile.preferences) => {
-    // Ensure preferences object exists
     const currentPrefs = profile.preferences || INITIAL_PROFILE.preferences;
     const newPrefs = { ...currentPrefs, [key]: !currentPrefs[key] };
     onUpdate({ ...profile, preferences: newPrefs });
   };
-
-  // Calculations for Donut Chart
+  
   const totalMacros = profile.targetProtein + profile.targetCarbs + profile.targetFat;
-  const pPct = (profile.targetProtein / totalMacros) * 100;
-  const cPct = (profile.targetCarbs / totalMacros) * 100;
-  const fPct = (profile.targetFat / totalMacros) * 100;
+  const pPct = totalMacros ? (profile.targetProtein / totalMacros) * 100 : 0;
+  const cPct = totalMacros ? (profile.targetCarbs / totalMacros) * 100 : 0;
+  const fPct = totalMacros ? (profile.targetFat / totalMacros) * 100 : 0;
   const radius = 35;
   const circumference = 2 * Math.PI * radius;
   
@@ -920,12 +922,19 @@ const PremiumProfileView: React.FC<{
   const cDash = (cPct / 100) * circumference;
   const fDash = (fPct / 100) * circumference;
 
+  const avgConsistency = weeklyStats.length > 0 
+     ? Math.round(weeklyStats.reduce((a, b) => a + b, 0) / weeklyStats.length) 
+     : 0;
+  
+  const displayStats = [...weeklyStats];
+  while (displayStats.length < 7) {
+     displayStats.unshift(0);
+  }
+
   return (
     <div className="h-full bg-gray-50 dark:bg-black overflow-y-auto pb-24 transition-colors duration-500 font-sans">
       
-      {/* 1. Hero Header */}
       <div className={`pt-safe pb-8 px-6 rounded-b-[40px] bg-gradient-to-br ${getGradient()} shadow-sm relative overflow-hidden transition-colors duration-1000`}>
-        {/* Animated Background Elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/40 dark:bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 animate-pulse"></div>
         
         <div className="relative z-10 flex flex-col items-center mt-6">
@@ -940,7 +949,6 @@ const PremiumProfileView: React.FC<{
                  <Award size={20} fill="currentColor" />
                </div>
              )}
-             <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#007AFF] animate-spin-slow opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
           </div>
 
           <h1 className="mt-4 text-3xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">{profile.name || 'Guest User'}</h1>
@@ -949,23 +957,13 @@ const PremiumProfileView: React.FC<{
             <span className={`px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase ${profile.isPremium ? 'bg-gradient-to-r from-yellow-100 to-amber-100 text-amber-800 border border-amber-200' : 'bg-gray-200 text-gray-600'}`}>
               {profile.isPremium ? 'Premium Member' : 'Free Plan'}
             </span>
-            <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs font-bold border border-orange-200 dark:border-orange-800">
-               <Flame size={12} fill="currentColor" />
-               <span>12 Day Streak</span>
-            </div>
           </div>
         </div>
       </div>
 
       <div className="px-5 mt-6 space-y-8">
-        
-        {/* 2. Health Stats Dashboard */}
         <div className="grid grid-cols-2 gap-4">
-           {/* Calorie Mastery */}
            <div className="col-span-1 bg-white dark:bg-[#1C1C1E] p-5 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-100 dark:border-gray-800 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Activity size={40} />
-              </div>
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Consistency</h3>
               <div className="relative w-20 h-20 mx-auto mb-4">
                  <svg viewBox="0 0 200 200" className="w-full h-full transform -rotate-90 overflow-visible">
@@ -979,54 +977,45 @@ const PremiumProfileView: React.FC<{
                             <feComposite in="SourceGraphic" in2="blur" operator="over" />
                         </filter>
                     </defs>
-                    {/* Track */}
                     <circle cx="100" cy="100" r="80" stroke="currentColor" strokeWidth="16" className="text-gray-100 dark:text-gray-800" fill="none" />
-                    {/* Progress */}
                     <circle 
                         cx="100" cy="100" r="80" 
                         stroke="url(#consistencyGradient)" 
                         strokeWidth="16" 
                         fill="none" 
                         strokeDasharray={2 * Math.PI * 80}
-                        strokeDashoffset={2 * Math.PI * 80 * (1 - 0.85)} 
+                        strokeDashoffset={2 * Math.PI * 80 * (1 - (avgConsistency / 100))} 
                         strokeLinecap="round"
                         style={{ filter: "url(#consistencyGlow)" }}
                     />
-                    {/* Inner Decor */}
                     <circle cx="100" cy="100" r="62" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4" className="text-gray-200 dark:text-gray-700" fill="none" />
                  </svg>
-                 <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-gray-900 dark:text-white">85%</div>
+                 <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-gray-900 dark:text-white">{avgConsistency}%</div>
               </div>
-              {/* Daily Bars */}
               <div className="flex justify-between items-end h-8 px-1">
-                 {[40, 70, 50, 90, 85, 30, 80].map((h, i) => (
+                 {displayStats.slice(-7).map((h, i) => (
                     <div key={i} className="w-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden h-full flex items-end">
-                       <div className="w-full bg-[#34C759] rounded-full transition-all duration-700 delay-100" style={{ height: `${h}%` }}></div>
+                       <div className="w-full bg-[#34C759] rounded-full transition-all duration-700 delay-100" style={{ height: `${Math.min(100, h)}%` }}></div>
                     </div>
                  ))}
               </div>
               <p className="text-center text-xs text-gray-500 mt-2 font-medium">Last 7 Days</p>
            </div>
 
-           {/* Nutrient Balance (SVG Donut) */}
            <div className="col-span-1 bg-white dark:bg-[#1C1C1E] p-5 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-100 dark:border-gray-800 relative overflow-hidden">
                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Target Split</h3>
                <div className="relative w-24 h-24 mx-auto mb-2">
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 80 80">
                      <circle cx="40" cy="40" r={radius} fill="none" strokeWidth="8" className="stroke-gray-100 dark:stroke-gray-800" />
-                     {/* Protein */}
-                     <circle cx="40" cy="40" r={radius} fill="none" stroke="#FF2D55" strokeWidth="8" strokeDasharray={`${pDash} ${circumference}`} strokeDashoffset="0" className="transition-all duration-1000 ease-out" />
-                     {/* Carbs */}
-                     <circle cx="40" cy="40" r={radius} fill="none" stroke="#FF9500" strokeWidth="8" strokeDasharray={`${cDash} ${circumference}`} strokeDashoffset={-pDash} className="transition-all duration-1000 ease-out delay-100" />
-                     {/* Fat */}
-                     <circle cx="40" cy="40" r={radius} fill="none" stroke="#007AFF" strokeWidth="8" strokeDasharray={`${fDash} ${circumference}`} strokeDashoffset={-(pDash + cDash)} className="transition-all duration-1000 ease-out delay-200" />
+                     {pPct > 0 && <circle cx="40" cy="40" r={radius} fill="none" stroke="#FF2D55" strokeWidth="8" strokeDasharray={`${pDash} ${circumference}`} strokeDashoffset="0" />}
+                     {cPct > 0 && <circle cx="40" cy="40" r={radius} fill="none" stroke="#FF9500" strokeWidth="8" strokeDasharray={`${cDash} ${circumference}`} strokeDashoffset={-pDash} />}
+                     {fPct > 0 && <circle cx="40" cy="40" r={radius} fill="none" stroke="#007AFF" strokeWidth="8" strokeDasharray={`${fDash} ${circumference}`} strokeDashoffset={-(pDash + cDash)} />}
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
                      <span className="text-[10px] font-bold text-gray-400">TARGET</span>
                   </div>
                </div>
                
-               {/* Legend */}
                <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
                      <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#FF2D55]"></div><span className="text-gray-600 dark:text-gray-300">Protein</span></div>
@@ -1044,83 +1033,26 @@ const PremiumProfileView: React.FC<{
            </div>
         </div>
 
-        {/* 2.5 Premium Card */}
         <PremiumCard isPremium={profile.isPremium} />
 
-        {/* 3. Personal Records */}
-        <div className="bg-white dark:bg-[#1C1C1E] rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-100 dark:border-gray-800 overflow-hidden transition-all duration-300">
-           <div 
-             className="p-5 flex justify-between items-center cursor-pointer active:bg-gray-50 dark:active:bg-[#2C2C2E]"
-             onClick={() => toggleSection('records')}
-           >
-              <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center text-yellow-600 dark:text-yellow-400">
-                    <Trophy size={20} />
-                 </div>
-                 <div>
-                    <h3 className="font-bold text-gray-900 dark:text-white text-lg">Personal Records</h3>
-                    <p className="text-xs text-gray-500">3 New Records</p>
-                 </div>
-              </div>
-              <ChevronRight size={20} className={`text-gray-400 transition-transform duration-300 ${expandedSection === 'records' ? 'rotate-90' : ''}`} />
-           </div>
-           
-           {expandedSection === 'records' && (
-              <div className="px-5 pb-5 space-y-3 animate-in slide-in-from-top-2 duration-300">
-                 {[
-                    { title: "Longest Streak", value: "14 Days", icon: "🔥", date: "Oct 12" },
-                    { title: "Most Protein", value: "180g", icon: "💪", date: "Oct 10" },
-                    { title: "Lowest Weight", value: "68kg", icon: "⚖️", date: "Sep 28" }
-                 ].map((rec, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-[#2C2C2E] border border-gray-100 dark:border-gray-700">
-                       <div className="flex items-center gap-3">
-                          <span className="text-xl">{rec.icon}</span>
-                          <div>
-                             <div className="font-semibold text-gray-900 dark:text-white text-sm">{rec.title}</div>
-                             <div className="text-xs text-gray-500">{rec.date}</div>
-                          </div>
-                       </div>
-                       <div className="font-bold text-[#007AFF]">{rec.value}</div>
-                    </div>
-                 ))}
-              </div>
-           )}
-        </div>
-
-        {/* 4. Activity Timeline */}
-        <div>
-           <h3 className="text-lg font-bold font-serif text-gray-900 dark:text-white mb-4 px-1">Activity Feed</h3>
-           <div className="relative pl-4 space-y-6 before:absolute before:left-[23px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gray-200 dark:before:bg-gray-800">
-              {[
-                 { time: "Today, 9:41 AM", title: "Logged Breakfast", subtitle: "Oatmeal & Berries • 340 kcal", icon: <Utensils size={14} className="text-white"/>, color: "bg-[#007AFF]" },
-                 { time: "Yesterday", title: "Goal Reached", subtitle: "Hit Protein Goal (150g)", icon: <Target size={14} className="text-white"/>, color: "bg-[#34C759]" },
-                 { time: "Oct 24", title: "Weight Update", subtitle: "70.5 kg (-0.5kg)", icon: <Weight size={14} className="text-white"/>, color: "bg-[#FF9500]" },
-              ].map((item, i) => (
-                 <div key={i} className="relative pl-8 animate-in slide-in-from-right-4 duration-500" style={{ animationDelay: `${i * 100}ms` }}>
-                    <div className={`absolute left-0 top-1 w-10 h-10 rounded-full ${item.color} flex items-center justify-center border-4 border-gray-50 dark:border-black shadow-sm z-10`}>
-                       {item.icon}
-                    </div>
-                    <div className="bg-white dark:bg-[#1C1C1E] p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
-                       <div className="text-xs text-gray-400 font-medium mb-1">{item.time}</div>
-                       <div className="font-bold text-gray-900 dark:text-white">{item.title}</div>
-                       <div className="text-sm text-gray-500 dark:text-gray-400">{item.subtitle}</div>
-                    </div>
-                 </div>
-              ))}
-           </div>
-        </div>
-
-        {/* 6. Settings List */}
         <div className="space-y-4">
            <h3 className="text-lg font-bold font-serif text-gray-900 dark:text-white px-1">Preferences</h3>
            <div className="bg-white dark:bg-[#1C1C1E] rounded-[24px] shadow-sm overflow-hidden border border-gray-100 dark:border-gray-800">
               <Switch 
-                  label="Notifications" 
+                  label="Push Notifications" 
                   checked={profile.preferences?.notifications} 
                   onChange={() => handleTogglePref('notifications')}
                   icon={<Bell size={18} />}
                   iconBgColor="bg-red-100 dark:bg-red-900/20"
                   iconColor="text-red-600 dark:text-red-400"
+              />
+              <Switch 
+                  label="Weekly Reports" 
+                  checked={profile.preferences?.weeklyReports || false} 
+                  onChange={() => handleTogglePref('weeklyReports')}
+                  icon={<FileText size={18} />}
+                  iconBgColor="bg-blue-100 dark:bg-blue-900/20"
+                  iconColor="text-blue-600 dark:text-blue-400"
               />
               <Switch 
                   label="Dark Mode" 
@@ -1129,14 +1061,6 @@ const PremiumProfileView: React.FC<{
                   icon={<Moon size={18} />}
                   iconBgColor="bg-purple-100 dark:bg-purple-900/20"
                   iconColor="text-purple-600 dark:text-purple-400"
-              />
-              <Switch 
-                  label="Apple Health Sync" 
-                  checked={profile.preferences?.healthSync} 
-                  onChange={() => handleTogglePref('healthSync')}
-                  icon={<Activity size={18} />}
-                  iconBgColor="bg-pink-100 dark:bg-pink-900/20"
-                  iconColor="text-pink-600 dark:text-pink-400"
               />
               <div onClick={onLogout} className="p-4 flex items-center justify-between active:bg-gray-50 dark:active:bg-[#2C2C2E] cursor-pointer text-red-500">
                   <div className="flex items-center gap-3">
@@ -1154,531 +1078,560 @@ const PremiumProfileView: React.FC<{
   );
 };
 
+// --- ADDING MISSING COMPONENTS ---
+
 const OnboardingStep: React.FC<{ 
   profile: UserProfile; 
   setProfile: (p: UserProfile) => void; 
   onComplete: () => void;
-  isLoading?: boolean;
+  isLoading: boolean;
 }> = ({ profile, setProfile, onComplete, isLoading }) => {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(1);
+  const nextStep = () => setStep(s => s + 1);
+  const prevStep = () => setStep(s => s - 1);
+  const update = (key: keyof UserProfile, value: any) => setProfile({ ...profile, [key]: value });
 
-  const nextStep = () => {
-    if (step < 3) setStep(step + 1);
-    else onComplete();
-  };
-
-  const update = (key: keyof UserProfile, value: any) => {
-    setProfile({ ...profile, [key]: value });
-  };
-
-  return (
-    <div className="min-h-screen relative overflow-hidden flex flex-col justify-between pt-safe pb-10">
-      <AuroraBackground />
-      
-      <div className="relative z-10 flex-1 px-6 flex flex-col mt-4">
-        {/* Progress */}
-        <div className="flex gap-2 mb-10">
-          {[0, 1, 2, 3].map(i => (
-             <div key={i} className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm">
-                <div 
-                  className={`h-full bg-[#007AFF] shadow-[0_0_10px_#007AFF] transition-all duration-500 ease-out ${i <= step ? 'w-full' : 'w-0'}`}
-                />
-             </div>
-          ))}
-        </div>
-
-        {/* Header */}
-        <div className="space-y-2 mb-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-           <span className="text-[#007AFF] font-bold text-xs tracking-widest uppercase glow-text">Step {step + 1} / 4</span>
-           <h1 className="text-4xl font-bold text-white tracking-tight leading-tight drop-shadow-lg">
-             {step === 0 && "Tell us about yourself"}
-             {step === 1 && "Your body stats"}
-             {step === 2 && "Main goal?"}
-             {step === 3 && "Activity level"}
-           </h1>
-        </div>
-
-        {/* Content Container */}
-        <div className="flex-1">
-          {step === 0 && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
-               {/* Gender */}
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-1.5 rounded-2xl flex shadow-xl">
-                {Object.values(Gender).map(g => (
-                  <button 
-                    key={g}
-                    onClick={() => update('gender', g)}
-                    className={`flex-1 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 ${profile.gender === g ? 'bg-white/20 text-white shadow-lg backdrop-blur-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                  >
-                    {g}
-                  </button>
-                ))}
-              </div>
-
-              {/* Name Input */}
-              <div className="space-y-2">
-                 <label className="text-gray-400 text-xs font-bold uppercase tracking-wider ml-1">First Name</label>
-                 <div className="relative group">
-                    <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-white transition-colors" size={20} />
-                    <input 
-                      type="text" 
-                      value={profile.name} 
-                      onChange={(e) => update('name', e.target.value)}
-                      placeholder="Your Name"
-                      className="w-full pl-12 pr-4 py-5 bg-white/5 border border-white/10 rounded-2xl text-xl text-white font-semibold focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all placeholder-gray-600"
-                    />
-                 </div>
-              </div>
-
-              {/* Age Input */}
-              <div className="space-y-2">
-                 <label className="text-gray-400 text-xs font-bold uppercase tracking-wider ml-1">Age</label>
-                 <div className="relative group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-white transition-colors font-bold text-lg">#</div>
-                    <input 
-                      type="number" 
-                      value={profile.age} 
-                      onChange={(e) => update('age', parseInt(e.target.value))}
-                      className="w-full pl-12 pr-4 py-5 bg-white/5 border border-white/10 rounded-2xl text-xl text-white font-semibold focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all placeholder-gray-600"
-                    />
-                 </div>
-              </div>
-            </div>
-          )}
-
-          {step === 1 && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
-               {/* Height */}
-               <div className="space-y-2">
-                 <label className="text-gray-400 text-xs font-bold uppercase tracking-wider ml-1">Height (cm)</label>
-                 <div className="relative group">
-                    <Ruler className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-white transition-colors" size={20} />
-                    <input 
-                      type="number" 
-                      value={profile.height} 
-                      onChange={(e) => update('height', parseInt(e.target.value))}
-                      className="w-full pl-12 pr-4 py-5 bg-white/5 border border-white/10 rounded-2xl text-3xl text-white font-bold focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all text-center"
-                    />
-                 </div>
+  const renderStep = () => {
+    switch(step) {
+      case 1:
+        return (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+            <div className="text-center mb-8">
+               <div className="w-20 h-20 bg-gradient-to-br from-[#007AFF] to-blue-600 rounded-[24px] mx-auto flex items-center justify-center shadow-xl mb-4">
+                  <span className="text-4xl">👋</span>
                </div>
-
-               {/* Weight */}
-               <div className="space-y-2">
-                 <label className="text-gray-400 text-xs font-bold uppercase tracking-wider ml-1">Weight (kg)</label>
-                 <div className="relative group">
-                    <Weight className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-white transition-colors" size={20} />
-                    <input 
-                      type="number" 
-                      value={profile.weight} 
-                      onChange={(e) => update('weight', parseInt(e.target.value))}
-                      className="w-full pl-12 pr-4 py-5 bg-white/5 border border-white/10 rounded-2xl text-3xl text-white font-bold focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all text-center"
-                    />
-                 </div>
-               </div>
+               <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome!</h2>
+               <p className="text-gray-500 mt-2">Let's get to know you better to create your personalized plan.</p>
             </div>
-          )}
-
-          {step === 2 && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-500">
-              {Object.values(Goal).map((g, idx) => (
-                <button 
-                  key={g}
-                  onClick={() => update('goal', g)}
-                  className={`w-full text-left p-6 rounded-3xl border transition-all duration-300 transform active:scale-95 group relative overflow-hidden ${profile.goal === g ? 'bg-gradient-to-r from-blue-600/30 to-blue-400/10 border-blue-500/50 shadow-[0_0_30px_rgba(0,122,255,0.2)]' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
-                >
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 text-2xl shadow-inner ${profile.goal === g ? 'bg-blue-500 text-white' : 'bg-white/10 text-gray-400'}`}>
-                     {idx === 0 ? '🔥' : idx === 1 ? '⚖️' : '💪'}
+            
+            <div className="space-y-4">
+               <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">What's your name?</label>
+                  <input 
+                    type="text" 
+                    value={profile.name}
+                    onChange={e => update('name', e.target.value)}
+                    className="w-full p-4 bg-gray-50 dark:bg-[#1C1C1E] rounded-2xl border-none focus:ring-2 focus:ring-[#007AFF] text-lg outline-none transition-all"
+                    placeholder="Enter your name"
+                  />
+               </div>
+               <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Gender</label>
+                  <div className="grid grid-cols-2 gap-3">
+                     {[Gender.Male, Gender.Female].map(g => (
+                        <button 
+                           key={g}
+                           onClick={() => update('gender', g)}
+                           className={`p-4 rounded-2xl font-medium transition-all ${profile.gender === g ? 'bg-[#007AFF] text-white shadow-lg shadow-blue-500/30' : 'bg-gray-50 dark:bg-[#1C1C1E] text-gray-600 dark:text-gray-400'}`}
+                        >
+                           {g}
+                        </button>
+                     ))}
                   </div>
-                  <span className={`text-xl font-bold block ${profile.goal === g ? 'text-white' : 'text-gray-400 group-hover:text-white'}`}>{g}</span>
-                  <p className="text-gray-500 text-sm mt-1">
-                     {idx === 0 ? 'Burn fat & get lean' : idx === 1 ? 'Stay healthy & fit' : 'Build strength & size'}
-                  </p>
-                  {profile.goal === g && (
-                     <div className="absolute top-6 right-6 text-blue-400 animate-in zoom-in duration-300">
-                        <CheckCircle2 size={24} fill="currentColor" className="text-white" />
-                     </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-500">
-              {Object.values(ActivityLevel).map((l, idx) => (
-                <button 
-                  key={l}
-                  onClick={() => update('activityLevel', l)}
-                  className={`w-full flex items-center gap-4 p-5 rounded-3xl border transition-all duration-300 transform active:scale-95 ${profile.activityLevel === l ? 'bg-gradient-to-r from-blue-600/30 to-blue-400/10 border-blue-500/50 shadow-[0_0_30px_rgba(0,122,255,0.2)]' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
-                >
-                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-inner shrink-0 ${profile.activityLevel === l ? 'bg-blue-500 text-white' : 'bg-white/10 text-gray-400'}`}>
-                      {idx === 0 ? '🪑' : idx === 1 ? '🚶' : idx === 2 ? '🏃' : '⚡️'}
-                   </div>
-                   <div className="text-left">
-                     <span className={`text-lg font-bold block ${profile.activityLevel === l ? 'text-white' : 'text-gray-400'}`}>{l}</span>
-                     <span className="text-xs text-gray-500">
-                        {idx === 0 ? 'Little to no exercise' : idx === 1 ? 'Light exercise 1-3 days/wk' : idx === 2 ? 'Moderate exercise 3-5 days/wk' : 'Hard exercise 6-7 days/wk'}
-                     </span>
-                   </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="px-6 relative z-10">
-        <Button 
-           onClick={nextStep} 
-           fullWidth 
-           disabled={isLoading}
-           className="h-16 text-lg font-bold bg-white text-black hover:bg-gray-100 border-none shadow-[0_0_30px_rgba(255,255,255,0.15)] rounded-2xl"
-        >
-          {isLoading ? <Loader2 className="animate-spin w-6 h-6 mx-auto"/> : (step === 3 ? "Complete Profile" : "Continue")}
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-const Paywall: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe }) => {
-  return (
-    <div className="min-h-screen bg-black text-white relative flex flex-col items-center justify-between pb-safe pt-safe">
-      <div className="absolute inset-0 opacity-50">
-        <img src="https://images.unsplash.com/photo-1543353071-873f17a7a088?q=80&w=2070&auto=format&fit=crop" alt="Background" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black" />
-      </div>
-
-      <div className="relative z-10 w-full px-6 mt-12 flex justify-end">
-         <button className="text-gray-400 font-medium text-sm">Restore</button>
-      </div>
-
-      <div className="relative z-10 w-full text-center space-y-8 px-6 pb-8">
-        <div className="space-y-4">
-          <MorphingFoodIcon />
-          <h1 className="text-[40px] font-bold tracking-tight leading-tight">SnapCalorie<span className="text-[#007AFF]">AI</span></h1>
-          <p className="text-gray-300 text-lg leading-relaxed max-w-xs mx-auto">
-            Instant calorie tracking powered by advanced AI. Eat smarter, live better.
-          </p>
-        </div>
-
-        <div className="space-y-3">
-           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex items-center justify-between cursor-pointer active:bg-white/20 active:scale-95 transition-all">
-              <div className="text-left">
-                <div className="font-semibold text-white">Annual Plan</div>
-                <div className="text-xs text-blue-300 font-medium mt-0.5">7 days free, then $59.99/yr</div>
-              </div>
-              <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center">
-                 <div className="w-2.5 h-2.5 rounded-full bg-[#007AFF]" />
-              </div>
-           </div>
-        </div>
-
-        <div className="space-y-4 pt-2">
-          <Button 
-            variant="primary" 
-            fullWidth 
-            onClick={onSubscribe} 
-            className="bg-[#007AFF] hover:bg-blue-600 text-white border-none h-14 text-lg"
-          >
-            Start Free Trial
-          </Button>
-          <p className="text-[11px] text-gray-500 max-w-xs mx-auto leading-tight">
-            Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const ProgressDashboard: React.FC<{ log: DayLog, profile: UserProfile }> = ({ log, profile }) => {
-  const totalProtein = log.items.reduce((acc, item) => acc + item.protein, 0);
-  const totalCarbs = log.items.reduce((acc, item) => acc + item.carbs, 0);
-  const totalFat = log.items.reduce((acc, item) => acc + item.fat, 0);
-  const totalFiber = log.items.reduce((acc, item) => acc + (item.fiber || 0), 0);
-  const totalSugar = log.items.reduce((acc, item) => acc + (item.sugar || 0), 0);
-  const totalSodium = log.items.reduce((acc, item) => acc + (item.sodium || 0), 0);
-  const totalCholesterol = log.items.reduce((acc, item) => acc + (item.cholesterol || 0), 0);
-  const totalCalories = log.items.reduce((acc, item) => acc + item.calories, 0);
-
-  // Data for Concentric Rings
-  const ringsData = [
-     { label: 'Calories', current: totalCalories, target: profile.targetCalories, color: '#FF2D55' },
-     { label: 'Protein', current: totalProtein, target: profile.targetProtein, color: '#34C759' },
-     { label: 'Carbs', current: totalCarbs, target: profile.targetCarbs, color: '#007AFF' },
-     { label: 'Fat', current: totalFat, target: profile.targetFat, color: '#FF9F0A' },
-  ];
-
-  return (
-    <div className="h-full bg-[#F2F2F7] dark:bg-black text-gray-900 dark:text-white font-sans overflow-y-auto pb-24 relative transition-colors duration-500">
-       {/* Ambient Glow */}
-       <div className="absolute top-0 left-0 w-full h-64 bg-blue-500/5 dark:bg-blue-900/20 blur-3xl pointer-events-none"></div>
-
-      <div className="bg-[#F2F2F7]/95 dark:bg-black/95 pt-safe px-5 pb-4 sticky top-0 z-40 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 transition-colors duration-500">
-         <h1 className="text-3xl font-bold tracking-tight">Summary</h1>
-         <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-         </div>
-      </div>
-
-      <div className="px-5 space-y-6 mt-4 relative z-10">
-         
-         {/* Hero Energy Rings Card */}
-         <div className="bg-white dark:bg-[#1C1C1E] rounded-[32px] p-6 relative overflow-hidden border border-gray-200 dark:border-white/5 shadow-sm transition-colors duration-500">
-            <div className="flex justify-between items-start mb-6">
-               <h2 className="text-lg font-bold">Energy Balance</h2>
-               <div className="bg-gray-100 dark:bg-white/10 px-3 py-1 rounded-full text-xs font-bold text-gray-600 dark:text-gray-300 transition-colors">
-                  {totalCalories} / {profile.targetCalories} kcal
                </div>
             </div>
-
-            <div className="py-4">
-               {/* NEW Concentric Rings */}
-               <ConcentricActivityRings data={ringsData} />
-            </div>
-
-            <div className="mt-6 flex justify-between px-2 text-[11px] font-medium text-gray-500 dark:text-gray-400">
-                <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-[#FF2D55] shadow-[0_0_8px_#FF2D55]"></div> Calories
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-[#34C759] shadow-[0_0_8px_#34C759]"></div> Protein
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-[#007AFF] shadow-[0_0_8px_#007AFF]"></div> Carbs
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-[#FF9F0A] shadow-[0_0_8px_#FF9F0A]"></div> Fat
-                </div>
-            </div>
-         </div>
-
-         {/* Nutrient Grid */}
-         <div>
-            <h2 className="text-lg font-bold mb-4 px-1">Micronutrients</h2>
-            <div className="grid grid-cols-2 gap-3">
-               <ModernNutrientBar label="Fiber" current={totalFiber} max={profile.targetFiber} unit="g" color="#30D158" />
-               <ModernNutrientBar label="Sugar" current={totalSugar} max={profile.targetSugar} unit="g" color="#FF9F0A" type="limit" />
-               <ModernNutrientBar label="Sodium" current={totalSodium} max={profile.maxSodium} unit="mg" color="#BF5AF2" type="limit" />
-               <ModernNutrientBar label="Cholesterol" current={totalCholesterol} max={profile.maxCholesterol} unit="mg" color="#FF375F" type="limit" />
-            </div>
-         </div>
-
-         {/* Trends (Placeholder) */}
-         <div className="bg-white dark:bg-gradient-to-br dark:from-gray-900 dark:to-[#1C1C1E] rounded-[28px] p-6 border border-gray-200 dark:border-white/5 relative overflow-hidden group cursor-pointer shadow-sm transition-colors duration-500">
-             <div className="absolute inset-0 bg-gray-50 dark:bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-             <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-500/20 flex items-center justify-center text-blue-500 dark:text-blue-400 transition-colors">
-                     <TrendingUp size={24} />
-                 </div>
-                 <div>
-                     <h3 className="font-bold text-lg text-gray-900 dark:text-white">Weekly Trend</h3>
-                     <p className="text-gray-500 dark:text-gray-400 text-sm">You're hitting 90% of goals this week!</p>
-                 </div>
-                 <ChevronRight className="ml-auto text-gray-400 dark:text-gray-500" />
+            <Button onClick={nextStep} disabled={!profile.name} fullWidth className="mt-8">Continue</Button>
+          </div>
+        );
+      case 2:
+        return (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+             <div className="text-center mb-8">
+               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Body Stats</h2>
+               <p className="text-gray-500 mt-2">This helps us calculate your calorie needs.</p>
              </div>
-         </div>
-      </div>
+             
+             <div className="space-y-6">
+               <div className="bg-white dark:bg-[#1C1C1E] p-6 rounded-[24px] shadow-sm border border-gray-100 dark:border-gray-800">
+                  <div className="flex justify-between mb-2">
+                     <label className="font-semibold text-gray-700 dark:text-gray-300">Age</label>
+                     <span className="text-[#007AFF] font-bold">{profile.age} years</span>
+                  </div>
+                  <input 
+                     type="range" min="18" max="100" value={profile.age} 
+                     onChange={e => update('age', parseInt(e.target.value))}
+                     className="w-full accent-[#007AFF] h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer"
+                  />
+               </div>
+
+               <div className="bg-white dark:bg-[#1C1C1E] p-6 rounded-[24px] shadow-sm border border-gray-100 dark:border-gray-800">
+                  <div className="flex justify-between mb-2">
+                     <label className="font-semibold text-gray-700 dark:text-gray-300">Height</label>
+                     <span className="text-[#007AFF] font-bold">{profile.height} cm</span>
+                  </div>
+                  <input 
+                     type="range" min="140" max="220" value={profile.height} 
+                     onChange={e => update('height', parseInt(e.target.value))}
+                     className="w-full accent-[#007AFF] h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer"
+                  />
+               </div>
+
+               <div className="bg-white dark:bg-[#1C1C1E] p-6 rounded-[24px] shadow-sm border border-gray-100 dark:border-gray-800">
+                  <div className="flex justify-between mb-2">
+                     <label className="font-semibold text-gray-700 dark:text-gray-300">Weight</label>
+                     <span className="text-[#007AFF] font-bold">{profile.weight} kg</span>
+                  </div>
+                  <input 
+                     type="range" min="40" max="150" value={profile.weight} 
+                     onChange={e => update('weight', parseInt(e.target.value))}
+                     className="w-full accent-[#007AFF] h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer"
+                  />
+               </div>
+             </div>
+             
+             <div className="flex gap-4 pt-4">
+                <Button variant="secondary" onClick={prevStep} className="flex-1">Back</Button>
+                <Button onClick={nextStep} className="flex-1">Next</Button>
+             </div>
+          </div>
+        );
+      case 3:
+         return (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+               <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Your Goal</h2>
+               </div>
+               
+               <div className="grid gap-4">
+                  {[Goal.LoseWeight, Goal.Maintain, Goal.GainMuscle].map(g => (
+                     <button
+                        key={g}
+                        onClick={() => update('goal', g)}
+                        className={`p-5 rounded-2xl border-2 text-left transition-all flex items-center justify-between group ${profile.goal === g ? 'border-[#007AFF] bg-blue-50 dark:bg-blue-900/20' : 'border-transparent bg-white dark:bg-[#1C1C1E] hover:bg-gray-50'}`}
+                     >
+                        <span className={`font-bold ${profile.goal === g ? 'text-[#007AFF]' : 'text-gray-700 dark:text-gray-300'}`}>{g}</span>
+                        {profile.goal === g && <CheckCircle2 className="text-[#007AFF]" size={20} />}
+                     </button>
+                  ))}
+               </div>
+
+               <div className="mt-8">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 ml-1">Activity Level</label>
+                  <div className="grid gap-3">
+                     {[ActivityLevel.Sedentary, ActivityLevel.Light, ActivityLevel.Moderate, ActivityLevel.Active].map(l => (
+                        <button
+                           key={l}
+                           onClick={() => update('activityLevel', l)}
+                           className={`p-4 rounded-2xl text-sm font-medium transition-all text-left ${profile.activityLevel === l ? 'bg-[#007AFF] text-white shadow-md' : 'bg-white dark:bg-[#1C1C1E] text-gray-600 dark:text-gray-400'}`}
+                        >
+                           {l}
+                        </button>
+                     ))}
+                  </div>
+               </div>
+
+               <div className="flex gap-4 pt-4">
+                  <Button variant="secondary" onClick={prevStep} className="flex-1">Back</Button>
+                  <Button onClick={onComplete} disabled={isLoading} className="flex-1">
+                     {isLoading ? <Loader2 className="animate-spin mx-auto" /> : 'Create Plan'}
+                  </Button>
+               </div>
+            </div>
+         );
+      default: return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F2F2F7] dark:bg-black flex flex-col justify-center p-6">
+       <div className="max-w-md w-full mx-auto">
+          {renderStep()}
+          
+          <div className="flex justify-center gap-2 mt-8">
+             {[1,2,3].map(i => (
+                <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === step ? 'w-8 bg-[#007AFF]' : 'w-2 bg-gray-300 dark:bg-gray-800'}`} />
+             ))}
+          </div>
+       </div>
     </div>
   );
 };
 
 const AuthView: React.FC<{ 
-  onSuccess: () => void;
+  onSuccess: () => void; 
   onSkip: () => void;
-  profile: UserProfile; 
-  setProfile: (p: UserProfile) => void;
+  profile: UserProfile;
+  setProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
 }> = ({ onSuccess, onSkip, profile, setProfile }) => {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Removed isSignUp state as we now have two buttons
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAuth = async (mode: 'login' | 'signup') => {
+    if(!email.trim() || !password.trim()) {
+       setErrorMsg('Please enter both email and password.');
+       return;
+    }
     setLoading(true);
-    setError(null);
+    setErrorMsg(null);
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+      if (mode === 'signup') {
+         const { data, error } = await supabase.auth.signUp({ 
+            email: email.trim(),
+            password: password.trim()
+         });
+         if (error) throw error;
+         if (data.session) onSuccess();
+         else if (data.user) {
+             alert('Account created! Please check your email or try logging in.');
+         }
       } else {
-        const { error } = await supabase.auth.signUp({ 
-            email, 
-            password,
-            options: {
-                data: {
-                    name: profile.name || 'User', // defaults if not filled
-                }
-            }
-        });
-        if (error) throw error;
+         const { data, error } = await supabase.auth.signInWithPassword({ 
+            email: email.trim(), 
+            password: password.trim() 
+         });
+         if (error) throw error;
+         if (data.session) onSuccess();
       }
-      onSuccess();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error: any) {
+      if (error.message.includes('Invalid login credentials')) setErrorMsg('Invalid email or password.');
+      else if (error.message.includes('User already registered')) setErrorMsg('User already registered. Please log in.');
+      else setErrorMsg(error.message || 'Authentication failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center relative overflow-hidden">
-        {/* Background Layers */}
-        <AuroraBackground />
-        <FireflyParticles />
-        <FloatingFoodBackground />
+    <div className="min-h-screen bg-black relative overflow-hidden flex flex-col items-center justify-center p-6 text-white font-sans">
+      <LiquidBackground />
+      
+      <div className="absolute top-20 right-10 w-20 h-20 animate-spin-slow-3d opacity-60 z-0 pointer-events-none">
+         <div className="relative w-full h-full transform-style-3d">
+            <div className="absolute inset-0 bg-red-500/30 border border-red-500/50 translate-z-10"></div>
+            <div className="absolute inset-0 bg-red-500/30 border border-red-500/50 -translate-z-10"></div>
+         </div>
+      </div>
 
-        {/* 3D Tilt Card Container */}
-        <div className="relative z-10 w-full max-w-md px-6 perspective-1000">
-           <div className="group relative transition-transform duration-300 ease-out hover:rotate-x-2 hover:rotate-y-2">
-              
-              {/* Glass Card */}
-              <div className="bg-white/10 backdrop-blur-2xl rounded-[32px] p-8 border border-white/20 shadow-2xl relative overflow-hidden">
-                 
-                 {/* Shine Effect */}
-                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent w-[200%] h-full animate-shimmer-fast pointer-events-none opacity-50"></div>
+      <div className="relative z-10 w-full max-w-sm animate-in fade-in zoom-in duration-700">
+         <div className="text-center mb-8 relative z-10">
+            <RotatingLogo />
+            
+            <div className="flex flex-col items-center">
+               <h1 className="text-5xl font-black tracking-tighter mb-2 text-transparent bg-clip-text bg-gradient-to-br from-white via-blue-100 to-gray-500 animate-glitch-text" data-text="SnapCal">SnapCal</h1>
+               <div className="flex items-center gap-2 mt-1">
+                  <TunisiaFlag className="w-5 h-5 rounded-sm shadow-sm" />
+                  <p className="text-blue-200 text-sm font-medium tracking-widest uppercase opacity-80">AI Nutrition Intelligence</p>
+               </div>
+            </div>
+         </div>
 
-                 {/* Logo Area */}
-                 <div className="text-center mb-8 relative z-10">
-                    <div className="w-20 h-20 bg-gradient-to-br from-[#007AFF] to-indigo-600 rounded-[28px] mx-auto flex items-center justify-center shadow-lg shadow-blue-500/40 mb-6 animate-float-slow relative overflow-hidden group">
-                       <ScanLine className="text-white w-10 h-10 relative z-10" strokeWidth={1.5} />
-                       {/* Scanning Beam Animation */}
-                       <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-transparent via-white/20 to-transparent w-full animate-[scan-vertical_2s_ease-in-out_infinite]"></div>
-                    </div>
-                    <h1 className="text-4xl font-bold tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-gray-400 drop-shadow-sm">SnapCalorie</h1>
-                    <p className="text-blue-200 text-sm font-medium tracking-wide">AI NUTRITION TRACKER</p>
-                 </div>
+         <TiltCard className="bg-black/40 backdrop-blur-xl rounded-[40px] p-8 border border-[#007AFF]/30 shadow-[0_0_50px_rgba(0,122,255,0.2)]">
+            {/* Removed Top Toggle Switch */}
 
-                 {/* Form */}
-                 <form onSubmit={handleAuth} className="space-y-4 relative z-10">
-                    <div className="space-y-4">
-                        <div className="relative group">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#007AFF] transition-colors" size={20} />
-                            <input 
-                                type="email" 
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="Email"
-                                required
-                                className="w-full pl-12 pr-4 py-4 bg-black/20 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:bg-black/40 focus:border-blue-500/50 transition-all"
-                                autoCapitalize="none"
-                                autoCorrect="off"
-                                autoComplete="email"
-                            />
-                        </div>
-                        <div className="relative group">
-                            <LockIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#007AFF] transition-colors" size={20} />
-                            <input 
-                                type="password" 
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Password"
-                                required
-                                minLength={6}
-                                className="w-full pl-12 pr-4 py-4 bg-black/20 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:bg-black/40 focus:border-blue-500/50 transition-all"
-                                autoCapitalize="none"
-                                autoCorrect="off"
-                                autoComplete="current-password"
-                            />
-                        </div>
-                    </div>
-
-                    {error && (
-                       <div className="text-red-300 text-sm text-center bg-red-900/30 py-3 rounded-xl border border-red-500/20 backdrop-blur-sm animate-in fade-in slide-in-from-top-2">
-                          {error === "Invalid login credentials" ? "Invalid login credentials. Need to Sign Up?" : error}
-                       </div>
-                    )}
-
-                    <button 
-                        type="submit" 
-                        disabled={loading}
-                        className="w-full bg-[#007AFF] hover:bg-blue-500 text-white h-14 rounded-2xl text-lg font-bold shadow-[0_0_20px_rgba(0,122,255,0.4)] mt-4 relative overflow-hidden group/btn transition-all active:scale-[0.98]"
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent w-full -translate-x-full group-hover/btn:animate-[shimmer_1s_infinite]"></div>
-                        {loading ? <Loader2 className="animate-spin mx-auto"/> : (isLogin ? "Sign In" : "Create Account")}
-                    </button>
-                 </form>
-
-                 {/* Footer Links */}
-                 <div className="text-center space-y-5 mt-6 relative z-10">
+            <form onSubmit={(e) => { e.preventDefault(); handleAuth('login'); }} className="space-y-6">
+               <div>
+                  <div className="relative group">
+                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#007AFF] group-focus-within:text-white transition-colors z-10" size={20} />
+                     <input 
+                        type="email" 
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        placeholder="Email address" 
+                        required
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        autoComplete="email"
+                        className="w-full bg-black/50 border-2 border-[#007AFF]/50 rounded-full py-4 pl-12 pr-4 text-white placeholder-gray-500 outline-none focus:border-[#007AFF] focus:shadow-[0_0_20px_rgba(0,122,255,0.3)] transition-all font-medium"
+                     />
+                  </div>
+               </div>
+               
+               <div>
+                  <div className="relative group">
+                     <LockIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-[#007AFF] group-focus-within:text-white transition-colors z-10" size={20} />
+                     <input 
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        placeholder="Password" 
+                        required
+                        minLength={6}
+                        className="w-full bg-black/50 border-2 border-[#007AFF]/50 rounded-full py-4 pl-12 pr-12 text-white placeholder-gray-500 outline-none focus:border-[#007AFF] focus:shadow-[0_0_20px_rgba(0,122,255,0.3)] transition-all font-medium"
+                     />
                      <button 
-                        onClick={() => {
-                           setIsLogin(!isLogin);
-                           setError(null);
-                        }} 
-                        className="text-sm text-gray-400 hover:text-white transition-colors font-medium"
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                      >
-                        {isLogin ? "New here? Create account" : "Have an account? Sign in"}
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                      </button>
-                     
-                     <div className="relative py-2">
-                        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
-                        <div className="relative flex justify-center text-[10px] uppercase tracking-widest"><span className="bg-transparent px-2 text-gray-500">Or continue with</span></div>
-                     </div>
+                  </div>
+               </div>
+               
+               {errorMsg && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 flex items-center gap-2 text-red-200 text-xs font-medium animate-in fade-in slide-in-from-top-2 shadow-lg shadow-red-500/10">
+                     <AlertCircle size={14} className="shrink-0" />
+                     {errorMsg}
+                  </div>
+               )}
 
-                     <button onClick={onSkip} className="text-sm font-semibold text-white hover:text-blue-200 transition-colors flex items-center justify-center gap-2 w-full py-2 hover:bg-white/5 rounded-xl">
-                        Guest Mode <ArrowRight size={14} />
-                     </button>
-                 </div>
-              </div>
-           </div>
-        </div>
-        
-        <style>{`
-           .rotate-x-2 { transform: rotateX(2deg); }
-           .rotate-y-2 { transform: rotateY(2deg); }
-           .perspective-1000 { perspective: 1000px; }
-           @keyframes scan-vertical {
-             0% { transform: translateY(-150%); }
-             100% { transform: translateY(250%); }
-           }
-        `}</style>
+               <div className="pt-2 space-y-4">
+                  <MagneticButton 
+                    type="submit" 
+                    fullWidth 
+                    disabled={loading} 
+                    className="rounded-full h-14 font-bold text-lg bg-gradient-to-r from-[#007AFF] to-blue-500 shadow-[0_0_30px_rgba(0,122,255,0.4)] hover:shadow-[0_0_40px_rgba(0,122,255,0.6)] border border-white/20 transition-all duration-300"
+                  >
+                     {loading ? (
+                        <span className="flex items-center gap-2 justify-center"><Loader2 className="animate-spin" size={20} /> Processing...</span>
+                     ) : (
+                        'Sign In'
+                     )}
+                  </MagneticButton>
+                  
+                  <div className="relative py-2">
+                     <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
+                     <div className="relative flex justify-center text-[10px] font-bold tracking-widest uppercase"><span className="bg-[#050505] px-4 text-gray-500 rounded-full">New Here?</span></div>
+                  </div>
+
+                  <button 
+                    type="button"
+                    onClick={() => handleAuth('signup')}
+                    disabled={loading}
+                    className="w-full h-12 rounded-full font-semibold text-white/90 bg-white/5 border border-[#007AFF]/30 hover:bg-[#007AFF]/10 hover:border-[#007AFF]/60 active:scale-95 transition-all flex items-center justify-center shadow-[0_0_20px_rgba(0,122,255,0.1)]"
+                  >
+                    Create Account
+                  </button>
+               </div>
+            </form>
+
+            <div className="mt-6">
+                <button onClick={onSkip} className="w-full py-2 text-xs font-semibold text-gray-500 hover:text-gray-300 transition-colors flex items-center justify-center gap-1 group">
+                   Continue as Guest <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+            </div>
+         </TiltCard>
+         
+         <div className="mt-8 flex justify-center gap-6 opacity-40 hover:opacity-100 transition-opacity duration-300">
+            <span className="text-[10px] text-gray-300 cursor-pointer">Privacy Policy</span>
+            <span className="text-[10px] text-gray-300 cursor-pointer">Terms of Service</span>
+         </div>
+      </div>
     </div>
   );
 };
 
+const Paywall: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe }) => {
+   return (
+      <div className="min-h-screen bg-black text-white relative overflow-hidden flex flex-col">
+         <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 to-black z-0"></div>
+         <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-[#007AFF]/20 to-transparent blur-3xl pointer-events-none"></div>
+
+         <div className="relative z-10 flex-1 flex flex-col p-6 pt-safe">
+            <div className="flex justify-end">
+               <button onClick={onSubscribe} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-white/20">
+                  <X size={18} />
+               </button>
+            </div>
+
+            <div className="flex-1 flex flex-col items-center justify-center text-center mt-4">
+               <div className="w-20 h-20 rounded-[24px] bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-[0_0_40px_rgba(255,165,0,0.4)] mb-8 animate-bounce-slow">
+                  <Crown size={40} className="text-white" fill="currentColor" />
+               </div>
+               
+               <h1 className="text-4xl font-bold mb-4">Unlock Full Potential</h1>
+               <p className="text-gray-400 text-lg max-w-xs mx-auto mb-10">
+                  Get unlimited AI food scans, advanced insights, and personalized coaching.
+               </p>
+
+               <div className="w-full max-w-sm space-y-4 mb-8">
+                  {[
+                     { icon: ScanLine, text: "Unlimited AI Food Analysis" },
+                     { icon: TrendingUp, text: "Advanced Macro Trends" },
+                     { icon: Zap, text: "Faster Processing Speed" },
+                     { icon: Target, text: "Custom Macro Targets" }
+                  ].map((item, i) => (
+                     <div key={i} className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
+                        <div className="w-10 h-10 rounded-full bg-[#007AFF]/20 flex items-center justify-center text-[#007AFF]">
+                           <item.icon size={20} />
+                        </div>
+                        <span className="font-medium text-left flex-1">{item.text}</span>
+                        <CheckCircle2 size={20} className="text-[#34C759]" fill="currentColor" />
+                     </div>
+                  ))}
+               </div>
+            </div>
+
+            <div className="mt-auto">
+               <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-1 rounded-[24px] mb-4">
+                  <div className="bg-black rounded-[22px] p-4 flex justify-between items-center relative overflow-hidden">
+                     <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-transparent animate-pulse"></div>
+                     <div className="relative z-10">
+                        <div className="text-xs text-yellow-500 font-bold uppercase tracking-wider mb-0.5">Best Value</div>
+                        <div className="font-bold text-xl">28.88 DT <span className="text-sm text-gray-400 font-normal">/ 3 months</span></div>
+                     </div>
+                     <div className="relative z-10 bg-white text-black px-4 py-2 rounded-xl text-sm font-bold">
+                        Save 50%
+                     </div>
+                  </div>
+               </div>
+               
+               <Button onClick={onSubscribe} fullWidth className="bg-[#007AFF] hover:bg-[#0066CC] text-white shadow-[0_0_30px_rgba(0,122,255,0.4)] border-none text-lg py-4">
+                  Start 7-Day Free Trial
+               </Button>
+               <p className="text-center text-xs text-gray-500 mt-4 mb-safe">
+                  Recurring billing. Cancel anytime.
+               </p>
+            </div>
+         </div>
+      </div>
+   );
+};
+
+const HolographicScanner: React.FC<{ image: string | null }> = ({ image }) => {
+   return (
+      <div className="relative w-64 h-64 mb-8 perspective-1000">
+         <div className="relative w-full h-full transform-style-3d rotate-x-12">
+            <div className="absolute inset-0 border-2 border-[#007AFF]/30 rounded-[32px] overflow-hidden bg-black/20 backdrop-blur-sm shadow-[0_0_30px_rgba(0,122,255,0.2)]">
+               {image && (
+                  <div className="w-full h-full relative">
+                     <img src={image} className="w-full h-full object-cover opacity-60" alt="Scanning" />
+                     <div className="absolute inset-0 bg-[#007AFF]/10 mix-blend-overlay"></div>
+                  </div>
+               )}
+               
+               {/* Scanning Laser */}
+               <div className="absolute top-0 left-0 right-0 h-1 bg-white shadow-[0_0_15px_rgba(255,255,255,0.8),0_0_30px_rgba(0,122,255,0.8)] animate-scan-laser z-20"></div>
+               
+               {/* Grid Overlay */}
+               <div className="absolute inset-0 bg-[linear-gradient(rgba(0,122,255,0.15)_1px,transparent_1px),linear-gradient(90deg,rgba(0,122,255,0.15)_1px,transparent_1px)] bg-[size:30px_30px] z-10 pointer-events-none"></div>
+
+               {/* Corner UI Elements */}
+               <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-[#007AFF] z-20 rounded-tl-md opacity-80"></div>
+               <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-[#007AFF] z-20 rounded-tr-md opacity-80"></div>
+               <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-[#007AFF] z-20 rounded-bl-md opacity-80"></div>
+               <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-[#007AFF] z-20 rounded-br-md opacity-80"></div>
+            </div>
+            
+            {/* Holographic Base */}
+            <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-48 h-12 bg-[#007AFF] blur-2xl opacity-20 rounded-full pointer-events-none"></div>
+         </div>
+      </div>
+   );
+};
+
 const ProcessingView: React.FC<{ image: string | null }> = ({ image }) => {
-  return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center">
-       {image && (
-          <div className="absolute inset-0 z-0 opacity-50 blur-xl scale-110">
-             <img src={image} className="w-full h-full object-cover" alt="Processing" />
-          </div>
-       )}
-       <div className="relative z-10 flex flex-col items-center">
-          <div className="relative w-32 h-32 mb-8">
-             <div className="absolute inset-0 border-4 border-[#007AFF] rounded-3xl animate-pulse"></div>
-             <div className="absolute inset-0 border-t-4 border-l-4 border-white rounded-3xl animate-spin-slow"></div>
-             {image && (
-                 <div className="absolute inset-2 rounded-2xl overflow-hidden border-2 border-white/20">
-                    <img src={image} className="w-full h-full object-cover" alt="Analysis" />
-                 </div>
-             )}
-             <div className="absolute top-1/2 left-0 right-0 h-1 bg-white/80 shadow-[0_0_10px_white] animate-[scan_2s_ease-in-out_infinite]"></div>
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-2 animate-pulse">Analyzing Food...</h2>
-          <p className="text-gray-400 text-sm">Identifying calories and macros</p>
-       </div>
-       <style>{`
-         @keyframes scan {
-           0%, 100% { top: 0%; opacity: 0; }
-           10%, 90% { opacity: 1; }
-           50% { top: 100%; }
-         }
-       `}</style>
-    </div>
-  );
+   return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center relative overflow-hidden">
+         {/* Background Grid */}
+         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+         
+         <div className="relative z-10 flex flex-col items-center">
+            {/* Holographic Scanner */}
+            <HolographicScanner image={image} />
+
+            <div className="flex flex-col items-center space-y-4">
+               <div className="flex items-center gap-3">
+                  <div className="relative">
+                     <div className="absolute inset-0 bg-blue-500 blur-md opacity-50 animate-pulse"></div>
+                     <Loader2 className="animate-spin text-[#007AFF] relative z-10" size={28} />
+                  </div>
+                  <span className="text-2xl font-bold text-white tracking-widest uppercase">Analyzing</span>
+               </div>
+               
+               {/* Digital Text Decoder */}
+               <div className="h-6 overflow-hidden">
+                  <p className="text-[#007AFF] text-sm font-mono tracking-widest animate-pulse">IDENTIFYING MACROS...</p>
+               </div>
+            </div>
+         </div>
+      </div>
+   );
+};
+
+const ProgressDashboard: React.FC<{ log: DayLog; profile: UserProfile }> = ({ log, profile }) => {
+   // Calculate totals
+   const totalCalories = log.items.reduce((acc, i) => acc + i.calories, 0);
+   const totalProtein = log.items.reduce((acc, i) => acc + i.protein, 0);
+   const totalCarbs = log.items.reduce((acc, i) => acc + i.carbs, 0);
+   const totalFat = log.items.reduce((acc, i) => acc + i.fat, 0);
+
+   return (
+      <div className="h-full bg-[#F2F2F7] dark:bg-black overflow-y-auto pb-24 transition-colors duration-500">
+         <div className="bg-[#F2F2F7]/95 dark:bg-black/95 pt-safe px-5 pb-4 sticky top-0 z-40 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50">
+            <h1 className="text-[34px] font-bold text-black dark:text-white tracking-tight mt-2">Progress</h1>
+         </div>
+
+         <div className="px-5 mt-4 space-y-6">
+            {/* Main Rings Card */}
+            <div className="bg-white dark:bg-[#1C1C1E] rounded-[32px] p-6 shadow-sm border border-gray-100 dark:border-gray-800">
+               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Daily Summary</h3>
+               <ConcentricActivityRings 
+                  data={[
+                     { label: 'Calories', current: totalCalories, target: profile.targetCalories, color: '#FF2D55' },
+                     { label: 'Protein', current: totalProtein, target: profile.targetProtein, color: '#34C759' },
+                     { label: 'Carbs', current: totalCarbs, target: profile.targetCarbs, color: '#007AFF' },
+                  ]} 
+               />
+               <div className="grid grid-cols-3 gap-2 mt-8">
+                  <div className="text-center">
+                     <div className="text-[#FF2D55] font-bold text-xl">{totalCalories}</div>
+                     <div className="text-xs text-gray-500">Calories</div>
+                  </div>
+                  <div className="text-center">
+                     <div className="text-[#34C759] font-bold text-xl">{totalProtein}g</div>
+                     <div className="text-xs text-gray-500">Protein</div>
+                  </div>
+                  <div className="text-center">
+                     <div className="text-[#007AFF] font-bold text-xl">{totalCarbs}g</div>
+                     <div className="text-xs text-gray-500">Carbs</div>
+                  </div>
+               </div>
+            </div>
+
+            {/* Detailed Macros */}
+            <div>
+               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 px-1">Nutrient Breakdown</h3>
+               <div className="grid grid-cols-2 gap-3">
+                  <ModernNutrientBar label="Protein" current={totalProtein} max={profile.targetProtein} unit="g" color="#34C759" />
+                  <ModernNutrientBar label="Carbs" current={totalCarbs} max={profile.targetCarbs} unit="g" color="#007AFF" />
+                  <ModernNutrientBar label="Fat" current={totalFat} max={profile.targetFat} unit="g" color="#FF9500" />
+                  <ModernNutrientBar label="Fiber" current={log.items.reduce((a,i)=>a+(i.fiber||0),0)} max={profile.targetFiber} unit="g" color="#AF52DE" />
+                  <ModernNutrientBar label="Sugar" current={log.items.reduce((a,i)=>a+(i.sugar||0),0)} max={profile.targetSugar} unit="g" color="#FF2D55" type="limit" />
+                  <ModernNutrientBar label="Sodium" current={log.items.reduce((a,i)=>a+(i.sodium||0),0)} max={profile.maxSodium} unit="mg" color="#5856D6" type="limit" />
+               </div>
+            </div>
+
+            {/* Weekly Trend (Placeholder for visual completeness) */}
+            <div className="bg-white dark:bg-[#1C1C1E] rounded-[24px] p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+               <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-gray-900 dark:text-white">Weight Trend</h3>
+                  <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded-lg">-0.5 kg</span>
+               </div>
+               <div className="h-32 flex items-end justify-between px-2">
+                  {[70.5, 70.4, 70.2, 70.3, 70.1, 70.0, 69.9].map((w, i) => (
+                     <div key={i} className="flex flex-col items-center gap-2 group">
+                        <div 
+                           className="w-2 bg-blue-200 dark:bg-blue-900 rounded-t-full transition-all group-hover:bg-[#007AFF]" 
+                           style={{ height: `${(w - 68) * 15}%` }}
+                        ></div>
+                        <span className="text-[10px] text-gray-400">{['M','T','W','T','F','S','S'][i]}</span>
+                     </div>
+                  ))}
+               </div>
+            </div>
+         </div>
+      </div>
+   );
 };
 
 // --- Main App Component ---
 
 const App: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile>(INITIAL_PROFILE);
-  const [currentView, setCurrentView] = useState<ViewState>('AUTH'); // Changed from ONBOARDING
+  const [currentView, setCurrentView] = useState<ViewState>('AUTH');
+  
+  // DATE STATE
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [todayLog, setTodayLog] = useState<DayLog>(INITIAL_LOG);
+  
+  // Weekly Consistency State
+  const [consistencyHistory, setConsistencyHistory] = useState<number[]>([]);
+
   const [session, setSession] = useState<any>(null);
   const [isDataLoading, setIsDataLoading] = useState(false);
   const currentViewRef = useRef<ViewState>('AUTH');
@@ -1708,9 +1661,8 @@ const App: React.FC = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) {
-        fetchUserData(session.user.id);
+        fetchUserData(session.user.id, selectedDate);
       } else {
-        // If no session, make sure we are on AUTH
         if (!isGuest && currentViewRef.current !== 'AUTH') {
             setCurrentView('AUTH');
         }
@@ -1723,7 +1675,7 @@ const App: React.FC = () => {
       setSession(session);
       if (session) {
          setIsGuest(false);
-         fetchUserData(session.user.id);
+         fetchUserData(session.user.id, selectedDate);
       } else {
          if (!isGuest) {
             setCurrentView('AUTH');
@@ -1734,71 +1686,76 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, [isGuest]);
 
+  // Fetch when selectedDate changes
+  useEffect(() => {
+    if (session?.user?.id) {
+        fetchUserData(session.user.id, selectedDate);
+    }
+  }, [selectedDate, session]);
+
+  // Fetch Weekly Stats when entering Profile View
+  useEffect(() => {
+    if (currentView === 'PROFILE' && session?.user?.id) {
+        fetchWeeklyStats(session.user.id);
+    }
+  }, [currentView, session]);
+
   // Keep ref in sync
   useEffect(() => {
      currentViewRef.current = currentView;
   }, [currentView]);
 
-  const fetchUserData = async (userId: string) => {
+  const fetchUserData = async (userId: string, dateStr: string) => {
     setIsDataLoading(true);
     try {
-      // Fetch Profile
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
       if (profileData) {
-        setProfile({
-            ...INITIAL_PROFILE, // defaults
+        setProfile(prev => ({
+            ...prev,
             ...profileData,
             preferences: profileData.preferences || INITIAL_PROFILE.preferences,
-            // Re-hydrate target fields if they were stored in a JSONB column 'targets'
             ...(profileData.targets || {})
-        });
+        }));
         
-        // Only redirect if we are not currently in an auth flow or special view
-        // Prevents jumping to Onboarding when we are waiting for Auth to complete
         const safeViews = ['AUTH', 'PAYWALL', 'DASHBOARD'];
         if (profileData.has_onboarded) {
           if (!safeViews.includes(currentViewRef.current)) {
              setCurrentView(profileData.is_premium ? 'DASHBOARD' : 'PAYWALL');
           }
         } else {
-          // User exists but hasn't finished setup
           setCurrentView('ONBOARDING');
         }
       } else {
-        // User is authenticated but no profile exists
         setCurrentView('ONBOARDING');
       }
 
-      // Fetch Today's Log
-      const today = new Date().toISOString().split('T')[0];
-      
       const { data: foodData } = await supabase
         .from('food_logs')
         .select('*')
         .eq('user_id', userId)
-        .eq('date', today)
+        .eq('date', dateStr)
         .order('created_at', { ascending: false });
 
       const { data: waterData } = await supabase
         .from('water_logs')
         .select('amount')
         .eq('user_id', userId)
-        .eq('date', today);
+        .eq('date', dateStr);
 
       const totalWater = waterData ? waterData.reduce((acc: number, curr: any) => acc + curr.amount, 0) : 0;
       
       setTodayLog({
-        date: today,
+        date: dateStr,
         items: (foodData || []).map((f: any) => ({
             ...f,
             timestamp: new Date(f.created_at).getTime(),
             mealType: f.meal_type,
-            imageUrl: f.image_url // map DB column to state property
+            imageUrl: f.image_url 
         })),
         waterIntake: totalWater
       });
@@ -1810,7 +1767,41 @@ const App: React.FC = () => {
     }
   };
 
-  // Dark Mode Effect
+  const fetchWeeklyStats = async (userId: string) => {
+     try {
+        const today = new Date();
+        const sevenDaysAgo = new Date(today);
+        sevenDaysAgo.setDate(today.getDate() - 6);
+        const startDateStr = sevenDaysAgo.toISOString().split('T')[0];
+
+        const { data: weeklyLogs } = await supabase
+           .from('food_logs')
+           .select('date, calories')
+           .eq('user_id', userId)
+           .gte('date', startDateStr);
+        
+        if (!weeklyLogs) return;
+
+        const caloriesByDate: Record<string, number> = {};
+        weeklyLogs.forEach((log: any) => {
+           caloriesByDate[log.date] = (caloriesByDate[log.date] || 0) + log.calories;
+        });
+
+        const stats: number[] = [];
+        for (let i = 0; i < 7; i++) {
+           const d = new Date(sevenDaysAgo);
+           d.setDate(sevenDaysAgo.getDate() + i);
+           const dateStr = d.toISOString().split('T')[0];
+           const cals = caloriesByDate[dateStr] || 0;
+           const percentage = Math.min(100, (cals / (profile.targetCalories || 2000)) * 100);
+           stats.push(percentage);
+        }
+        setConsistencyHistory(stats);
+     } catch (e) {
+        console.error("Error fetching weekly stats", e);
+     }
+  };
+
   useEffect(() => {
     if (profile.preferences.darkMode) {
       document.documentElement.classList.add('dark');
@@ -1838,21 +1829,17 @@ const App: React.FC = () => {
      });
 
      if (newUnlocks.length > 0) {
-        // Trigger celebration
         setJustUnlockedAchievement(newUnlocks[0]);
         if (typeof navigator.vibrate === 'function') {
-           navigator.vibrate([100, 50, 100]); // Haptic feedback
+           navigator.vibrate([100, 50, 100]); 
         }
 
-        // Update profile
         const updatedPrefs = { 
            ...currentProfile.preferences, 
            unlockedAwards: Array.from(unlockedIds) 
         };
-        const updatedProfile = { ...currentProfile, preferences: updatedPrefs };
-        setProfile(updatedProfile);
+        setProfile(p => ({ ...p, preferences: updatedPrefs }));
 
-        // Save to DB if user
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         if (currentSession?.user?.id) {
            await supabase.from('profiles').update({ preferences: updatedPrefs }).eq('id', currentSession.user.id);
@@ -1861,14 +1848,9 @@ const App: React.FC = () => {
   };
 
   const handleAuthSuccess = async () => {
-    // We'll rely on the session state update to grab the user ID, but we can optimistically set view
     const { data: { session: newSession } } = await supabase.auth.getSession();
     
-    // Even if newSession is null (e.g. pending email verification), we should let the user through to the next screen 
-    // to avoid getting stuck.
-    
     if (newSession?.user?.id) {
-       // Check if this user has already onboarded
        const { data: profileData } = await supabase
             .from('profiles')
             .select('has_onboarded, is_premium')
@@ -1879,21 +1861,17 @@ const App: React.FC = () => {
           setProfile(p => ({ ...p, hasOnboarded: true, isPremium: profileData.is_premium }));
           setCurrentView(profileData.is_premium ? 'DASHBOARD' : 'PAYWALL');
        } else {
-          // New user or incomplete profile
           setCurrentView('ONBOARDING');
        }
     } else {
-       // Fallback for pending sessions
        setCurrentView('ONBOARDING');
     }
   };
 
   const handleOnboardingComplete = async () => {
-      // Calculate final macros
       const updatedProfile = calculateMacros(profile);
       setProfile({ ...updatedProfile, hasOnboarded: true });
 
-      // Save to Supabase if logged in
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       
       if (currentSession?.user?.id) {
@@ -1927,9 +1905,7 @@ const App: React.FC = () => {
   };
 
   const handleSubscribe = async () => {
-    // Check session again just in case it wasn't available during auth success
     const { data: { session: currentSession } } = await supabase.auth.getSession();
-    
     if (currentSession?.user?.id) {
        await supabase.from('profiles').update({ is_premium: true }).eq('id', currentSession.user.id);
     }
@@ -1955,8 +1931,7 @@ const App: React.FC = () => {
       try {
         const result = await analyzeFoodImage(base64String);
         if (result.confidence === 0 && result.foodName === "Unknown Food") {
-          // Soft failure or API key error
-          alert(result.description); // Alert user about the specific issue (e.g. missing API key)
+          alert(result.description);
         }
         setAnalysisResult(result);
         setEditForm(result); 
@@ -2003,7 +1978,6 @@ const App: React.FC = () => {
         items: [newItem, ...todayLog.items]
       };
 
-      // Optimistic Update
       setTodayLog(updatedLog);
       setCurrentView('DASHBOARD');
       setShowConfetti(true);
@@ -2013,15 +1987,13 @@ const App: React.FC = () => {
       setAnalysisResult(null);
       setEditForm(null);
 
-      // Check Achievements
       checkAchievements(updatedLog, profile);
 
-      // Save to Supabase (Only if authenticated)
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       if (currentSession?.user?.id) {
         const { error } = await supabase.from('food_logs').insert({
           user_id: currentSession.user.id,
-          date: new Date().toISOString().split('T')[0],
+          date: selectedDate, // Use the selected date to allow back-logging
           meal_type: mealType,
           name: editForm.foodName,
           calories: editForm.calories,
@@ -2033,29 +2005,26 @@ const App: React.FC = () => {
           sodium: editForm.sodium,
           cholesterol: editForm.cholesterol,
           confidence: editForm.confidence,
-          image_url: capturedImage, // Save image
+          image_url: capturedImage,
         });
 
         if (error) console.error("Error saving food:", error);
-        else fetchUserData(currentSession.user.id);
+        else fetchUserData(currentSession.user.id, selectedDate);
       }
     }
   };
 
   const handleAddWater = async (amount: number) => {
     const updatedLog = { ...todayLog, waterIntake: (todayLog.waterIntake || 0) + amount };
-    // Optimistic Update
     setTodayLog(updatedLog);
 
-    // Check Achievements
     checkAchievements(updatedLog, profile);
 
-    // Save to Supabase (Only if authenticated)
     const { data: { session: currentSession } } = await supabase.auth.getSession();
     if (currentSession?.user?.id) {
       const { error } = await supabase.from('water_logs').insert({
         user_id: currentSession.user.id,
-        date: new Date().toISOString().split('T')[0],
+        date: selectedDate, // Use selected date
         amount: amount
       });
       
@@ -2139,32 +2108,26 @@ const App: React.FC = () => {
   if (currentView === 'PROFILE') {
      return (
         <div className="h-full">
-           <PremiumProfileView profile={profile} onUpdate={handleUpdateProfile} onLogout={handleLogout} />
+           <PremiumProfileView profile={profile} weeklyStats={consistencyHistory} onUpdate={handleUpdateProfile} onLogout={handleLogout} />
            <Navigation currentView={currentView} onNavigate={setCurrentView} onCameraClick={handleCameraClick} />
         </div>
      );
   }
 
-  // Review Sheet
   if (currentView === 'REVIEW') {
     return (
       <div className="fixed inset-0 z-50 flex flex-col ios-slide-up">
-        {/* Background Overlay */}
         <div className="absolute inset-0 bg-black" onClick={() => setCurrentView('DASHBOARD')}>
            {capturedImage && <img src={capturedImage} className="w-full h-full object-cover opacity-80" alt="Captured" />}
         </div>
 
-        {/* Modal Sheet */}
         <div className="absolute bottom-0 left-0 right-0 bg-[#F2F2F7] dark:bg-[#1C1C1E] rounded-t-[32px] overflow-hidden flex flex-col h-[85%] shadow-[0_-10px_40px_rgba(0,0,0,0.3)]">
-          
-          {/* Sheet Header */}
           <div className="bg-white dark:bg-[#2C2C2E] px-6 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-700 sticky top-0 z-10">
              <button onClick={() => setCurrentView('DASHBOARD')} className="text-[#007AFF] text-[17px]">Cancel</button>
              <div className="font-semibold text-[17px] dark:text-white">Edit Entry</div>
              <button onClick={handleSaveFood} className="text-[#007AFF] font-bold text-[17px]">Add</button>
           </div>
           
-          {/* Scrollable Content */}
           <div className="overflow-y-auto flex-1 p-6 pb-20">
              <div className="flex flex-col items-center mb-6">
                 <div className="w-24 h-24 rounded-full shadow-lg mb-4 overflow-hidden border-4 border-white dark:border-gray-800">
@@ -2257,7 +2220,6 @@ const App: React.FC = () => {
     );
   }
 
-  // Dashboard View
   const totalCalories = todayLog.items.reduce((acc, item) => acc + item.calories, 0);
   const totalProtein = todayLog.items.reduce((acc, item) => acc + item.protein, 0);
   const totalCarbs = todayLog.items.reduce((acc, item) => acc + item.carbs, 0);
@@ -2265,7 +2227,6 @@ const App: React.FC = () => {
   
   const remainingCalories = Math.max(0, profile.targetCalories - totalCalories);
 
-  // Group meals
   const groupedMeals = {
      Breakfast: todayLog.items.filter(i => i.mealType === 'Breakfast'),
      Lunch: todayLog.items.filter(i => i.mealType === 'Lunch'),
@@ -2278,7 +2239,6 @@ const App: React.FC = () => {
     <div className="h-full bg-[#F2F2F7] dark:bg-black font-sans text-slate-900 dark:text-white pb-24 overflow-y-auto transition-colors duration-500">
       <Confetti active={showConfetti} />
       
-      {/* Unlock Modal */}
       {justUnlockedAchievement && (
          <AchievementUnlockModal 
             achievement={justUnlockedAchievement} 
@@ -2287,6 +2247,43 @@ const App: React.FC = () => {
       )}
 
       <style>{`
+         @keyframes blob-bounce {
+           0%, 100% { transform: translate(0, 0) scale(1); }
+           33% { transform: translate(30px, -50px) scale(1.1); }
+           66% { transform: translate(-20px, 20px) scale(0.9); }
+         }
+         .animate-blob-bounce {
+            animation: blob-bounce 10s infinite alternate ease-in-out;
+         }
+         @keyframes chromatic-move {
+            0% { transform: translate(0,0) scale(1); opacity: 0.6; }
+            20% { transform: translate(-2px, 1px) scale(1.01); opacity: 0.5; }
+            40% { transform: translate(1px, -1px) scale(0.99); opacity: 0.4; }
+            60% { transform: translate(-1px, 2px) scale(1.02); opacity: 0.6; }
+            80% { transform: translate(2px, -2px) scale(0.98); opacity: 0.5; }
+            100% { transform: translate(0,0) scale(1); opacity: 0.6; }
+         }
+         .animate-chromatic-move {
+            animation: chromatic-move 2s infinite linear;
+         }
+         @keyframes scan-laser {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; box-shadow: 0 0 20px #fff, 0 0 10px #007AFF; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+         }
+         .animate-scan-laser {
+            animation: scan-laser 2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+         }
+         @keyframes glitch-text {
+            0% { transform: translate(0); text-shadow: 0 0 0 transparent; }
+            2% { transform: translate(-2px, 1px); text-shadow: 2px 0 #007AFF, -2px 0 #FF2D55; }
+            4% { transform: translate(0); text-shadow: 0 0 0 transparent; }
+            100% { transform: translate(0); }
+         }
+         .animate-glitch-text:hover {
+            animation: glitch-text 0.5s infinite;
+         }
          @keyframes breathe {
             0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255,255,255,0.2)); }
             50% { transform: scale(1.03); filter: drop-shadow(0 0 10px rgba(255,255,255,0.4)); }
@@ -2298,6 +2295,13 @@ const App: React.FC = () => {
          .ring-breathe {
             animation: breathe 3s ease-in-out infinite;
          }
+         @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px) scale(0.98); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+         }
+         .animate-slide-in-right {
+            animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+         }
       `}</style>
       <input 
         type="file" 
@@ -2308,12 +2312,11 @@ const App: React.FC = () => {
         onChange={handleFileChange}
       />
 
-      {/* Header */}
       <div className="bg-[#F2F2F7]/90 dark:bg-black/90 pt-safe px-5 pb-2 sticky top-0 z-40 backdrop-blur-xl transition-colors duration-500 border-b border-transparent dark:border-gray-800">
         <div className="flex justify-between items-end mb-1">
            <div className="flex flex-col">
              <span className="text-gray-500 dark:text-gray-400 font-semibold text-xs uppercase tracking-wider mb-1">
-               {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+               {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
              </span>
              <h1 className="text-[34px] font-bold text-black dark:text-white tracking-tight leading-none">Journal</h1>
            </div>
@@ -2325,27 +2328,22 @@ const App: React.FC = () => {
         </div>
       </div>
 
+      <WeekCalendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+
       <div className="px-5 mt-3 space-y-6">
         
-        {/* NEW HERO CARD - Lifesum Style */}
         <div className="relative overflow-hidden rounded-[32px] bg-[#054F44] dark:bg-[#04332c] text-white shadow-xl transform transition-all hover:scale-[1.01] duration-300">
-           {/* Particles */}
            <ParticleSystem />
-           
-           {/* Decorative Blur */}
            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
            <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-400/10 rounded-full blur-3xl -ml-12 -mb-12 pointer-events-none"></div>
 
            <div className="relative z-10 p-6">
-              {/* Main Stats Row */}
               <div className="flex justify-between items-center mb-8 mt-2">
-                 {/* Left: Eaten */}
                  <div className="text-center w-20">
                     <div className="text-2xl font-bold tracking-tight">{totalCalories}</div>
                     <div className="text-[10px] font-bold text-emerald-200/80 uppercase tracking-widest mt-0.5">Eaten</div>
                  </div>
 
-                 {/* Center: Ring */}
                  <div className="relative w-44 h-44 flex items-center justify-center">
                     <svg viewBox="0 0 200 200" className="w-full h-full transform -rotate-90 drop-shadow-2xl overflow-visible">
                         <defs>
@@ -2359,7 +2357,6 @@ const App: React.FC = () => {
                             </filter>
                         </defs>
 
-                        {/* Track */}
                         <circle
                             cx="100"
                             cy="100"
@@ -2370,7 +2367,6 @@ const App: React.FC = () => {
                             strokeLinecap="round"
                         />
 
-                        {/* Progress */}
                         <circle
                             cx="100"
                             cy="100"
@@ -2385,7 +2381,6 @@ const App: React.FC = () => {
                             style={{ filter: "url(#glow)" }}
                         />
                         
-                        {/* Inner Decor Ring */}
                         <circle
                             cx="100"
                             cy="100"
@@ -2397,21 +2392,18 @@ const App: React.FC = () => {
                         />
                     </svg>
 
-                    {/* Center Text */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
                        <div className="text-4xl font-bold tracking-tighter text-white drop-shadow-md">{remainingCalories}</div>
                        <div className="text-[10px] font-bold text-emerald-100 uppercase tracking-widest mt-1">Kcal Left</div>
                     </div>
                  </div>
 
-                 {/* Right: Burned (Static 0 for now as per design) */}
                  <div className="text-center w-20">
                     <div className="text-2xl font-bold tracking-tight">0</div>
                     <div className="text-[10px] font-bold text-emerald-200/80 uppercase tracking-widest mt-0.5">Burned</div>
                  </div>
               </div>
 
-              {/* Bottom: Macros */}
               <div className="grid grid-cols-3 gap-6 border-t border-white/10 pt-5">
                  <div className="flex flex-col items-center">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-200/80 mb-1.5">Carbs</span>
@@ -2438,22 +2430,20 @@ const App: React.FC = () => {
            </div>
         </div>
 
-        {/* Water Tracker - Fade In */}
         <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 fill-mode-backwards">
             <WaterTracker intake={todayLog.waterIntake || 0} onAdd={handleAddWater} />
         </div>
 
-        {/* Recent Meals Header & List - Fade In */}
         <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200 fill-mode-backwards">
            <div className="flex justify-between items-center mb-3">
-             <h2 className="text-[22px] font-bold text-black dark:text-white tracking-tight">Recent Meals</h2>
+             <h2 className="text-[22px] font-bold text-black dark:text-white tracking-tight">Meals</h2>
              <button onClick={handleCameraClick} className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-blue-600 dark:text-blue-400 active:scale-90 transition-transform"><Plus size={20} /></button>
            </div>
            
            <div className="space-y-5">
              {todayLog.items.length === 0 ? (
                <div className="bg-white dark:bg-[#1C1C1E] rounded-[22px] p-8 text-center shadow-sm border border-gray-100 dark:border-gray-800">
-                  <p className="text-gray-400 font-medium">No meals tracked today</p>
+                  <p className="text-gray-400 font-medium">No meals tracked for this day</p>
                   <button onClick={handleCameraClick} className="text-[#007AFF] font-medium text-sm mt-2">Tap + to add breakfast</button>
                </div>
              ) : (
@@ -2465,8 +2455,12 @@ const App: React.FC = () => {
                      <div key={mealType}>
                         <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2 ml-1">{mealType}</h3>
                         <div className="space-y-2">
-                        {meals.map((item) => (
-                          <div key={item.id} className="bg-white dark:bg-[#1C1C1E] rounded-[20px] p-3 flex items-center gap-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)] active:scale-[0.98] transition-all border border-gray-50 dark:border-gray-800/50">
+                        {meals.map((item, index) => (
+                          <div 
+                            key={item.id} 
+                            className="bg-white dark:bg-[#1C1C1E] rounded-[20px] p-3 flex items-center gap-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)] active:scale-[0.98] transition-all border border-gray-50 dark:border-gray-800/50 animate-slide-in-right"
+                            style={{ animationDelay: `${index * 100}ms` }}
+                          >
                               <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 overflow-hidden shrink-0 relative">
                                 {item.imageUrl ? (
                                   <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.name} />

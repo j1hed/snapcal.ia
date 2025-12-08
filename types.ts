@@ -20,7 +20,8 @@ export enum ActivityLevel {
 
 export interface UserPreferences {
   darkMode: boolean;
-  notifications: boolean;
+  notifications: boolean; // General push notifications
+  weeklyReports: boolean; // New setting for weekly summaries
   healthSync: boolean;
   unlockedAwards?: string[]; // Array of Achievement IDs
 }
