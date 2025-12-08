@@ -171,54 +171,87 @@ const LiquidBackground: React.FC = () => {
 };
 
 // 2. ROTATING LOGO (New Cinematic Aluminum/Glass Effect)
+import React, { useState, useEffect } from "react";
+import { ScanLine, Carrot, Pizza, Apple } from "your-icon-source";
+
 const RotatingLogo: React.FC = () => {
    const [index, setIndex] = useState(0);
+
+   // Icons used in rotation
    const icons = [ScanLine, Carrot, Pizza, Apple];
    const CurrentIcon = icons[index];
 
+   // Rotate icon every 3 seconds
    useEffect(() => {
       const interval = setInterval(() => {
          setIndex(prev => (prev + 1) % icons.length);
       }, 3000);
+
       return () => clearInterval(interval);
    }, []);
 
+   // Shared styles for card faces
+   const faceStyle =
+      "w-full h-full rounded-[28px] flex items-center justify-center " +
+      "relative overflow-hidden border border-white/20";
+
+   const brushedMetalTexture =
+      "absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/brushed-alum.png')] " +
+      "opacity-50 mix-blend-overlay";
+
    return (
       <div className="relative w-24 h-24 mx-auto mb-8 perspective-1000">
+
+         {/* === 3D Spinning Container === */}
          <div className="w-full h-full relative transform-style-3d animate-[spin-y-continuous_8s_linear_infinite]">
-            {/* Front Face (Current Icon) */}
+
+            {/* === Front Face === */}
             <div className="absolute inset-0 backface-visible">
-               <div className="w-full h-full rounded-[28px] bg-gradient-to-br from-gray-200 to-gray-400 flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.1)] relative overflow-hidden border border-white/20">
-                  {/* Brushed Metal Texture */}
-                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/brushed-alum.png')] opacity-50 mix-blend-overlay"></div>
-                  {/* Glass Sheen */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-white/40 via-transparent to-black/10 z-10 rounded-[28px]"></div>
+               <div className={`${faceStyle} bg-gradient-to-br from-gray-200 to-gray-400 shadow-[0_0_40px_rgba(255,255,255,0.1)]`}>
                   
-                  <div className="relative z-20 text-gray-800 drop-shadow-md transform transition-all duration-500">
+                  {/* Brushed Metal Texture */}
+                  <div className={brushedMetalTexture}></div>
+
+                  {/* Glass Highlight */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-white/40 via-transparent to-black/10 z-10 rounded-[28px]" />
+
+                  {/* Dynamic Icon */}
+                  <div className="relative z-20 text-gray-800 drop-shadow-md transition-all duration-500">
                      <CurrentIcon size={44} strokeWidth={1.5} />
                   </div>
 
-                  {/* Laser Scanner */}
-                  <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-transparent via-blue-400/50 to-transparent w-full animate-[scan-vertical_2s_ease-in-out_infinite] z-30 mix-blend-screen blur-[2px]"></div>
+                  {/* Laser Scanner Effect */}
+                  <div className="absolute top-0 left-0 right-0 h-1/3 
+                     bg-gradient-to-b from-transparent via-blue-400/50 to-transparent 
+                     animate-[scan-vertical_2s_ease-in-out_infinite] 
+                     z-30 mix-blend-screen blur-[2px]"></div>
                </div>
             </div>
-            
-            {/* Back Face (Duplicate for 360 illusion) */}
+
+            {/* === Back Face (mirrored to complete spinning illusion) === */}
             <div className="absolute inset-0 backface-visible rotate-y-180">
-               <div className="w-full h-full rounded-[28px] bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center shadow-lg relative overflow-hidden border border-white/20">
-                   <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/brushed-alum.png')] opacity-50 mix-blend-overlay"></div>
-                   <div className="relative z-20 text-gray-700">
-                      <ScanLine size={44} strokeWidth={1.5} />
-                   </div>
+               <div className={`${faceStyle} bg-gradient-to-br from-gray-300 to-gray-500 shadow-lg`}>
+                  
+                  <div className={brushedMetalTexture}></div>
+
+                  <div className="relative z-20 text-gray-700">
+                     <ScanLine size={44} strokeWidth={1.5} />
+                  </div>
                </div>
             </div>
          </div>
-         
-         {/* Reflection */}
-         <div className="absolute -bottom-8 left-0 right-0 h-8 bg-gradient-to-b from-white/20 to-transparent blur-md transform scale-y-[-1] opacity-30 mask-image-fade"></div>
+
+         {/* === Reflection Underneath === */}
+         <div className="absolute -bottom-8 left-0 right-0 h-8 
+            bg-gradient-to-b from-white/20 to-transparent 
+            blur-md opacity-30 transform scale-y-[-1] mask-image-fade">
+         </div>
       </div>
    );
 };
+
+export default RotatingLogo;
+
 
 // 3. MAGNETIC BUTTON (Micro-interaction)
 const MagneticButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'ghost' }> = ({ children, variant = 'primary', className = '', ...props }) => {
