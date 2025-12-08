@@ -852,7 +852,7 @@ const PremiumCard: React.FC<{ isPremium: boolean; onUpgrade?: () => void }> = ({
                     </div>
                     
                     <div className="font-mono text-xl tracking-widest text-gray-200 drop-shadow-md" style={{ wordSpacing: '0.2em' }}>
-                        5424 1801 2345 6789
+                        **** **** **45 6789
                     </div>
                 </div>
 
@@ -867,7 +867,7 @@ const PremiumCard: React.FC<{ isPremium: boolean; onUpgrade?: () => void }> = ({
 
                     <div className="flex flex-col items-end mr-4">
                          <div className="text-[0.55rem] text-gray-400 uppercase tracking-widest mb-0.5">Valid Thru</div>
-                         <div className="font-mono text-sm text-gray-200">12/28</div>
+                         <div className="font-mono text-sm text-gray-200">DEC/15</div>
                     </div>
 
                     {/* Visa/Mastercard Logo Simulation */}
