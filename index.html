@@ -23,6 +23,22 @@
                 card: '#1C1C1E',
                 separator: '#38383A'
               }
+            },
+            animation: {
+              'scan-vertical': 'scanVertical 3s cubic-bezier(0.4, 0, 0.2, 1) infinite',
+              'grid-move': 'gridMove 20s linear infinite',
+            },
+            keyframes: {
+              scanVertical: {
+                '0%': { top: '-10%', opacity: '0' },
+                '10%': { opacity: '1' },
+                '90%': { opacity: '1' },
+                '100%': { top: '110%', opacity: '0' },
+              },
+              gridMove: {
+                '0%': { transform: 'translateY(0)' },
+                '100%': { transform: 'translateY(50px)' },
+              }
             }
           }
         }
@@ -84,6 +100,20 @@
       @keyframes slideUp {
         from { transform: translateY(100%); }
         to { transform: translateY(0); }
+      }
+      
+      /* 3D Transform Utilities */
+      .perspective-1000 {
+        perspective: 1000px;
+      }
+      .transform-style-3d {
+        transform-style: preserve-3d;
+      }
+      .backface-hidden {
+        backface-visibility: hidden;
+      }
+      .rotate-y-180 {
+        transform: rotateY(180deg);
       }
     </style>
 <script type="importmap">

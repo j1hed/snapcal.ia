@@ -142,34 +142,162 @@ const calculateMacros = (profile: UserProfile): UserProfile => {
 
 // --- Animation Components ---
 
-// 1. LIQUID BACKGROUND (New Innovative Auth Background)
+// 1. LIQUID BACKGROUND (Updated to Fire Cracks Effect)
 const LiquidBackground: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    // Configuration
+    const colors = ['#FFFFFF', '#007AFF', '#34C759']; // White, Blue, Green
+    const cracks: Crack[] = [];
+    const maxCracks = 8; // Number of active cracks
+    
+    class Crack {
+      x: number;
+      y: number;
+      dir: number; // angle
+      speed: number;
+      color: string;
+      life: number;
+      width: number;
+      history: {x: number, y: number}[];
+      jitter: number;
+
+      constructor() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.dir = Math.random() * Math.PI * 2;
+        this.speed = Math.random() * 1.5 + 0.5; // "Low smooth" slow speed
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+        this.life = Math.random() * 150 + 100; // Life span
+        this.width = Math.random() * 2 + 1;
+        this.history = [];
+        this.jitter = 0;
+      }
+
+      update() {
+        this.life--;
+        
+        // "Fire crack" movement logic:
+        // Mostly smooth, but occasionally jerky (crack-like)
+        if (Math.random() < 0.08) {
+           this.jitter = (Math.random() - 0.5) * 1.5; // Sudden turn
+        } else {
+           this.jitter *= 0.9; // Smooth out
+        }
+        this.dir += this.jitter + (Math.random() - 0.5) * 0.05;
+
+        this.x += Math.cos(this.dir) * this.speed;
+        this.y += Math.sin(this.dir) * this.speed;
+
+        this.history.push({x: this.x, y: this.y});
+        // Keep trail length moderate
+        if (this.history.length > 30) this.history.shift();
+
+        // Wrap around screen
+        if (this.x < -50) this.x = width + 50;
+        if (this.x > width + 50) this.x = -50;
+        if (this.y < -50) this.y = height + 50;
+        if (this.y > height + 50) this.y = -50;
+      }
+
+      draw(ctx: CanvasRenderingContext2D) {
+        if (this.history.length < 2) return;
+        
+        ctx.beginPath();
+        ctx.moveTo(this.history[0].x, this.history[0].y);
+        
+        // Draw jagged line through history points
+        for (let i = 1; i < this.history.length; i++) {
+           // Add slight noise to drawing to simulate electricity/fire texture
+           const p = this.history[i];
+           const noiseX = (Math.random() - 0.5) * 2;
+           const noiseY = (Math.random() - 0.5) * 2;
+           ctx.lineTo(p.x + noiseX, p.y + noiseY);
+        }
+
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.width;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        // Glow Effect
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = this.color;
+        
+        // Fade out tail based on life or index
+        ctx.globalAlpha = Math.min(1, this.life / 50); 
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    // Initialize cracks
+    for (let i = 0; i < maxCracks; i++) {
+      cracks.push(new Crack());
+    }
+
+    let animationId: number;
+
+    const animate = () => {
+      // Trail fade effect: Draw semi-transparent black rect
+      // "Low smooth" means nice trails
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; 
+      ctx.fillRect(0, 0, width, height);
+
+      // Composite operation for glowing effect
+      ctx.globalCompositeOperation = 'screen';
+
+      // Respawn logic
+      if (cracks.length < maxCracks && Math.random() < 0.02) {
+         cracks.push(new Crack());
+      }
+
+      for (let i = cracks.length - 1; i >= 0; i--) {
+         cracks[i].update();
+         cracks[i].draw(ctx);
+         if (cracks[i].life <= 0) {
+            cracks.splice(i, 1);
+         }
+      }
+      
+      ctx.globalCompositeOperation = 'source-over';
+      animationId = requestAnimationFrame(animate);
+    };
+    
+    animate();
+
+    const handleResize = () => {
+       width = canvas.width = window.innerWidth;
+       height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   return (
     <div className="absolute inset-0 bg-black overflow-hidden z-0">
-      <svg className="hidden">
-        <defs>
-          <filter id="goo">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
-            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
-            <feComposite in="SourceGraphic" in2="goo" operator="atop" />
-          </filter>
-        </defs>
-      </svg>
-      <div className="absolute inset-0 w-full h-full" style={{ filter: 'url(#goo)' }}>
-        <div className="absolute top-[10%] left-[10%] w-72 h-72 bg-blue-600 rounded-full mix-blend-screen opacity-70 animate-blob-bounce delay-0"></div>
-        <div className="absolute top-[40%] right-[10%] w-80 h-80 bg-purple-600 rounded-full mix-blend-screen opacity-70 animate-blob-bounce delay-2000"></div>
-        <div className="absolute bottom-[10%] left-[30%] w-64 h-64 bg-indigo-600 rounded-full mix-blend-screen opacity-70 animate-blob-bounce delay-4000"></div>
-        <div className="absolute top-[20%] right-[30%] w-48 h-48 bg-cyan-600 rounded-full mix-blend-screen opacity-70 animate-blob-bounce delay-1000"></div>
-      </div>
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[80px]"></div>
-      
-      {/* Interactive Grid Overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_100%)]"></div>
+      <canvas ref={canvasRef} className="absolute inset-0" />
+      {/* Cinematic Vignette */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.8)_90%)] pointer-events-none"></div>
     </div>
   );
 };
 
-// 2. ROTATING LOGO (New Cinematic Aluminum/Glass Effect)
+// 2. ROTATING LOGO (3D Glass Scanner Effect)
 const RotatingLogo: React.FC = () => {
    const [index, setIndex] = useState(0);
    const icons = [ScanLine, Carrot, Pizza, Apple];
@@ -183,38 +311,37 @@ const RotatingLogo: React.FC = () => {
    }, []);
 
    return (
-      <div className="relative w-24 h-24 mx-auto mb-8 perspective-1000">
-         <div className="w-full h-full relative transform-style-3d animate-[spin-y-continuous_8s_linear_infinite]">
-            {/* Front Face (Current Icon) */}
-            <div className="absolute inset-0 backface-visible">
-               <div className="w-full h-full rounded-[28px] bg-gradient-to-br from-gray-200 to-gray-400 flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.1)] relative overflow-hidden border border-white/20">
-                  {/* Brushed Metal Texture */}
-                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/brushed-alum.png')] opacity-50 mix-blend-overlay"></div>
-                  {/* Glass Sheen */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-white/40 via-transparent to-black/10 z-10 rounded-[28px]"></div>
-                  
-                  <div className="relative z-20 text-gray-800 drop-shadow-md transform transition-all duration-500">
-                     <CurrentIcon size={44} strokeWidth={1.5} />
-                  </div>
+      <div className="relative w-32 h-32 mx-auto mb-10 perspective-1000 group">
+         <div className="relative w-full h-full transform-style-3d transition-transform duration-500 group-hover:rotate-x-12 group-hover:rotate-y-12">
+            {/* Glass Container Main Block */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-white/5 rounded-[28px] border border-white/10 backdrop-blur-md shadow-[0_0_40px_rgba(0,122,255,0.15)] overflow-hidden">
+                
+                {/* Inner Icon Container */}
+                <div className="w-full h-full flex items-center justify-center">
+                    <div className="relative z-20">
+                         {/* Icon with Glitch/Transition effect */}
+                         <CurrentIcon 
+                            size={48} 
+                            className="text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)] transition-all duration-300" 
+                            strokeWidth={1.5}
+                         />
+                    </div>
+                </div>
 
-                  {/* Laser Scanner */}
-                  <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-transparent via-blue-400/50 to-transparent w-full animate-[scan-vertical_2s_ease-in-out_infinite] z-30 mix-blend-screen blur-[2px]"></div>
-               </div>
+                {/* --- 3D Scanner Beam --- */}
+                {/* The glowing line */}
+                <div className="absolute inset-x-0 h-[2px] bg-blue-400 shadow-[0_0_20px_#007AFF] animate-scan-vertical z-30 opacity-80"></div>
+                {/* The trailing gradient light */}
+                <div className="absolute inset-x-0 h-24 bg-gradient-to-t from-blue-500/20 to-transparent animate-scan-vertical z-20 origin-bottom -translate-y-full" style={{ animationDelay: '0s' }}></div>
             </div>
+
+            {/* Decorative 3D Elements (Depth Layers) */}
+            <div className="absolute inset-0 border border-blue-500/20 rounded-[28px] translate-z-4 scale-105 pointer-events-none opacity-50"></div>
+            <div className="absolute inset-0 border border-blue-500/10 rounded-[28px] -translate-z-4 scale-95 pointer-events-none opacity-30"></div>
             
-            {/* Back Face (Duplicate for 360 illusion) */}
-            <div className="absolute inset-0 backface-visible rotate-y-180">
-               <div className="w-full h-full rounded-[28px] bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center shadow-lg relative overflow-hidden border border-white/20">
-                   <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/brushed-alum.png')] opacity-50 mix-blend-overlay"></div>
-                   <div className="relative z-20 text-gray-700">
-                      <ScanLine size={44} strokeWidth={1.5} />
-                   </div>
-               </div>
-            </div>
+            {/* Ambient Glow */}
+            <div className="absolute -inset-4 bg-blue-500/20 blur-2xl rounded-full -z-10 opacity-40 animate-pulse"></div>
          </div>
-         
-         {/* Reflection */}
-         <div className="absolute -bottom-8 left-0 right-0 h-8 bg-gradient-to-b from-white/20 to-transparent blur-md transform scale-y-[-1] opacity-30 mask-image-fade"></div>
       </div>
    );
 };
@@ -430,33 +557,6 @@ const Confetti: React.FC<{ active: boolean }> = ({ active }) => {
   return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-[100]" />;
 };
 
-const ParticleSystem: React.FC = () => {
-  const particles = useMemo(() => Array.from({ length: 12 }).map((_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    delay: `${Math.random() * 5}s`,
-    duration: `${3 + Math.random() * 4}s`
-  })), []);
-
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {particles.map(p => (
-        <div
-          key={p.id}
-          className="absolute w-1.5 h-1.5 bg-white/40 rounded-full blur-[1px]"
-          style={{
-            left: p.left,
-            top: p.top,
-            animation: `float-particle ${p.duration} ease-in-out infinite`,
-            animationDelay: p.delay
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
 const AchievementUnlockModal: React.FC<{ 
   achievement: AchievementDef | null; 
   onClose: () => void; 
@@ -497,27 +597,6 @@ const AchievementUnlockModal: React.FC<{
     </div>
   );
 };
-
-const TunisiaFlag: React.FC<{ className?: string }> = ({ className = '' }) => (
-   <div className={`relative bg-[#E70013] overflow-hidden flex items-center justify-center ${className}`}>
-      <div className="w-1/2 h-1/2 bg-white rounded-full flex items-center justify-center">
-         <div className="relative w-3/4 h-3/4">
-            <div className="absolute inset-0 rounded-full border-[3px] border-[#E70013] mask-moon" style={{ clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }}></div>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2/3 h-2/3 bg-[#E70013] rounded-full flex items-center justify-center">
-               <div className="w-1 h-1 bg-white rounded-full mb-1"></div> 
-            </div>
-            {/* Simple star approximation */}
-            <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-[#E70013] -translate-y-1/2 translate-x-1 rotate-45"></div>
-         </div>
-      </div>
-      <div className="absolute inset-0 bg-white rounded-full w-[40%] h-[40%] flex items-center justify-center">
-          <div className="relative w-full h-full">
-             <div className="absolute w-[80%] h-[80%] rounded-full border-4 border-[#E70013] top-[10%] left-[10%] clip-crescent"></div>
-             <div className="absolute w-[40%] h-[40%] bg-[#E70013] left-[45%] top-[30%] star-shape"></div>
-          </div>
-      </div>
-   </div>
-);
 
 // --- Sub-components ---
 
@@ -1310,13 +1389,6 @@ const AuthView: React.FC<{
   return (
     <div className="min-h-screen bg-black relative overflow-hidden flex flex-col items-center justify-center p-6 text-white font-sans">
       <LiquidBackground />
-      
-      <div className="absolute top-20 right-10 w-20 h-20 animate-spin-slow-3d opacity-60 z-0 pointer-events-none">
-         <div className="relative w-full h-full transform-style-3d">
-            <div className="absolute inset-0 bg-red-500/30 border border-red-500/50 translate-z-10"></div>
-            <div className="absolute inset-0 bg-red-500/30 border border-red-500/50 -translate-z-10"></div>
-         </div>
-      </div>
 
       <div className="relative z-10 w-full max-w-sm animate-in fade-in zoom-in duration-700">
          <div className="text-center mb-8 relative z-10">
@@ -1325,7 +1397,6 @@ const AuthView: React.FC<{
             <div className="flex flex-col items-center">
                <h1 className="text-5xl font-black tracking-tighter mb-2 text-transparent bg-clip-text bg-gradient-to-br from-white via-blue-100 to-gray-500 animate-glitch-text" data-text="SnapCal">SnapCal</h1>
                <div className="flex items-center gap-2 mt-1">
-                  <TunisiaFlag className="w-5 h-5 rounded-sm shadow-sm" />
                   <p className="text-blue-200 text-sm font-medium tracking-widest uppercase opacity-80">AI Nutrition Intelligence</p>
                </div>
             </div>
@@ -2239,10 +2310,11 @@ const App: React.FC = () => {
                                     strokeDashoffset={2 * Math.PI * 84 * (1 - Math.min(1, (caloriesLeft / profile.targetCalories)))} 
                                     strokeLinecap="round"
                                     className="transition-all duration-1000 ease-out shadow-[0_0_10px_white]"
+                                    style={{ filter: "drop-shadow(0 0 6px rgba(255,255,255,0.9))" }}
                                 />
                              </svg>
                              <div className="absolute inset-0 flex flex-col items-center justify-center pt-2">
-                                 <span className="text-5xl font-bold tracking-tighter drop-shadow-lg">{Math.max(0, caloriesLeft)}</span>
+                                 <span className="text-5xl font-bold tracking-tighter drop-shadow-lg text-white">{Math.max(0, caloriesLeft)}</span>
                                  <span className="text-[10px] font-bold text-emerald-100/60 tracking-widest uppercase mt-1">Kcal Left</span>
                              </div>
                          </div>
