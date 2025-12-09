@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Utensils, Award, ChevronRight, Settings, Droplets, Plus, Minus, Bell, Moon, Smartphone, Flame, Carrot, Pizza, Apple, CheckCircle2, Lock, Sparkles, LogOut, User as UserIcon, Loader2, Mail, Lock as LockIcon, Eye, EyeOff, ArrowRight, ScanLine, Activity, Zap, Ruler, Weight, Target, Footprints, Trophy, X, Crown, TrendingUp, AlertCircle, FileText, Wifi, QrCode } from 'lucide-react';
 import { Button } from './components/Button';
@@ -171,90 +170,57 @@ const LiquidBackground: React.FC = () => {
 };
 
 // 2. ROTATING LOGO (New Cinematic Aluminum/Glass Effect)
-import React, { useState, useEffect } from "react";
-import { ScanLine, Carrot,, Apple } from "your-icon-source";
-
 const RotatingLogo: React.FC = () => {
    const [index, setIndex] = useState(0);
-
-   // Icons used in rotation
    const icons = [ScanLine, Carrot, Pizza, Apple];
    const CurrentIcon = icons[index];
 
-   // Rotate icon every 3 seconds
    useEffect(() => {
       const interval = setInterval(() => {
          setIndex(prev => (prev + 1) % icons.length);
       }, 3000);
-
       return () => clearInterval(interval);
    }, []);
 
-   // Shared styles for card faces
-   const faceStyle =
-      "w-full h-full rounded-[28px] flex items-center justify-center " +
-      "relative overflow-hidden border border-white/20";
-
-   const brushedMetalTexture =
-      "absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/brushed-alum.png')] " +
-      "opacity-50 mix-blend-overlay";
-
    return (
       <div className="relative w-24 h-24 mx-auto mb-8 perspective-1000">
-
-         {/* === 3D Spinning Container === */}
          <div className="w-full h-full relative transform-style-3d animate-[spin-y-continuous_8s_linear_infinite]">
-
-            {/* === Front Face === */}
+            {/* Front Face (Current Icon) */}
             <div className="absolute inset-0 backface-visible">
-               <div className={`${faceStyle} bg-gradient-to-br from-gray-200 to-gray-400 shadow-[0_0_40px_rgba(255,255,255,0.1)]`}>
-                  
+               <div className="w-full h-full rounded-[28px] bg-gradient-to-br from-gray-200 to-gray-400 flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.1)] relative overflow-hidden border border-white/20">
                   {/* Brushed Metal Texture */}
-                  <div className={brushedMetalTexture}></div>
-
-                  {/* Glass Highlight */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-white/40 via-transparent to-black/10 z-10 rounded-[28px]" />
-
-                  {/* Dynamic Icon */}
-                  <div className="relative z-20 text-gray-800 drop-shadow-md transition-all duration-500">
+                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/brushed-alum.png')] opacity-50 mix-blend-overlay"></div>
+                  {/* Glass Sheen */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-white/40 via-transparent to-black/10 z-10 rounded-[28px]"></div>
+                  
+                  <div className="relative z-20 text-gray-800 drop-shadow-md transform transition-all duration-500">
                      <CurrentIcon size={44} strokeWidth={1.5} />
                   </div>
 
-                  {/* Laser Scanner Effect */}
-                  <div className="absolute top-0 left-0 right-0 h-1/3 
-                     bg-gradient-to-b from-transparent via-blue-400/50 to-transparent 
-                     animate-[scan-vertical_2s_ease-in-out_infinite] 
-                     z-30 mix-blend-screen blur-[2px]"></div>
+                  {/* Laser Scanner */}
+                  <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-transparent via-blue-400/50 to-transparent w-full animate-[scan-vertical_2s_ease-in-out_infinite] z-30 mix-blend-screen blur-[2px]"></div>
                </div>
             </div>
-
-            {/* === Back Face (mirrored to complete spinning illusion) === */}
+            
+            {/* Back Face (Duplicate for 360 illusion) */}
             <div className="absolute inset-0 backface-visible rotate-y-180">
-               <div className={`${faceStyle} bg-gradient-to-br from-gray-300 to-gray-500 shadow-lg`}>
-                  
-                  <div className={brushedMetalTexture}></div>
-
-                  <div className="relative z-20 text-gray-700">
-                     <ScanLine size={44} strokeWidth={1.5} />
-                  </div>
+               <div className="w-full h-full rounded-[28px] bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center shadow-lg relative overflow-hidden border border-white/20">
+                   <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/brushed-alum.png')] opacity-50 mix-blend-overlay"></div>
+                   <div className="relative z-20 text-gray-700">
+                      <ScanLine size={44} strokeWidth={1.5} />
+                   </div>
                </div>
             </div>
          </div>
-
-         {/* === Reflection Underneath === */}
-         <div className="absolute -bottom-8 left-0 right-0 h-8 
-            bg-gradient-to-b from-white/20 to-transparent 
-            blur-md opacity-30 transform scale-y-[-1] mask-image-fade">
-         </div>
+         
+         {/* Reflection */}
+         <div className="absolute -bottom-8 left-0 right-0 h-8 bg-gradient-to-b from-white/20 to-transparent blur-md transform scale-y-[-1] opacity-30 mask-image-fade"></div>
       </div>
    );
 };
 
-export default RotatingLogo;
-
-
 // 3. MAGNETIC BUTTON (Micro-interaction)
-const MagneticButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'ghost' }> = ({ children, variant = 'primary', className = '', ...props }) => {
+const MagneticButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'ghost'; fullWidth?: boolean }> = ({ children, variant = 'primary', fullWidth = false, className = '', ...props }) => {
    const btnRef = useRef<HTMLButtonElement>(null);
    const [pos, setPos] = useState({ x: 0, y: 0 });
 
@@ -275,11 +241,13 @@ const MagneticButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
       primary: "bg-[#007AFF] text-white shadow-[0_10px_30px_rgba(0,122,255,0.4)] hover:shadow-[0_10px_40px_rgba(0,122,255,0.6)]",
       ghost: "bg-transparent text-gray-400 hover:text-white"
    };
+   
+   const widthClass = fullWidth ? "w-full" : "";
 
    return (
       <button 
          ref={btnRef}
-         className={`${baseStyles} ${variants[variant]} ${className}`}
+         className={`${baseStyles} ${variants[variant]} ${widthClass} ${className}`}
          onMouseMove={handleMouseMove}
          onMouseLeave={handleMouseLeave}
          style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
@@ -802,7 +770,7 @@ const Switch: React.FC<{
   );
 };
 
-const PremiumCard: React.FC<{ isPremium: boolean; onUpgrade?: () => void }> = ({ isPremium, onUpgrade }) => {
+const PremiumCard: React.FC<{ isPremium: boolean; name?: string; onUpgrade?: () => void }> = ({ isPremium, name, onUpgrade }) => {
    const cardRef = useRef<HTMLDivElement>(null);
    const [transform, setTransform] = useState('');
 
@@ -853,11 +821,8 @@ const PremiumCard: React.FC<{ isPremium: boolean; onUpgrade?: () => void }> = ({
                     <div className="flex flex-col">
                         <span className="font-serif text-2xl font-bold tracking-widest drop-shadow-sm" 
                               style={{ 
-                                  background: 'linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7)',
-                                  WebkitBackgroundClip: 'text',
-                                  backgroundClip: 'text',
-                                  color: 'transparent',
-                                  textShadow: '0px 1px 2px rgba(0,0,0,0.5)'
+                                  color: 'white',
+                                  textShadow: '-1px -1px 0 #d4af37, 1px -1px 0 #d4af37, -1px 1px 0 #d4af37, 1px 1px 0 #d4af37'
                               }}>
                             SNAPCAL.AI
                         </span>
@@ -885,7 +850,7 @@ const PremiumCard: React.FC<{ isPremium: boolean; onUpgrade?: () => void }> = ({
                     </div>
                     
                     <div className="font-mono text-xl tracking-widest text-gray-200 drop-shadow-md" style={{ wordSpacing: '0.2em' }}>
-                        **** **** **45 6789
+                        •••• •••• •••• ••••
                     </div>
                 </div>
 
@@ -894,13 +859,13 @@ const PremiumCard: React.FC<{ isPremium: boolean; onUpgrade?: () => void }> = ({
                     <div className="flex flex-col">
                         <div className="text-[0.55rem] text-gray-400 uppercase tracking-widest mb-0.5">Cardholder</div>
                         <div className="font-serif text-sm tracking-widest text-gray-200 uppercase font-bold shadow-black drop-shadow-sm">
-                            JIHAAD
+                            {name || 'GUEST MEMBER'}
                         </div>
                     </div>
 
                     <div className="flex flex-col items-end mr-4">
-                         <div className="text-[0.55rem] text-gray-400 uppercase tracking-widest mb-0.5">Valid Thru</div>
-                         <div className="font-mono text-sm text-gray-200">DEC/25</div>
+                         <div className="text-[0.55rem] text-gray-400 uppercase tracking-widest mb-0.5">Renews</div>
+                         <div className="font-mono text-sm text-gray-200 uppercase">Monthly</div>
                     </div>
 
                     {/* Visa/Mastercard Logo Simulation */}
@@ -1066,7 +1031,7 @@ const PremiumProfileView: React.FC<{
            </div>
         </div>
 
-        <PremiumCard isPremium={profile.isPremium} />
+        <PremiumCard isPremium={profile.isPremium} name={profile.name} />
 
         <div className="space-y-4">
            <h3 className="text-lg font-bold font-serif text-gray-900 dark:text-white px-1">Preferences</h3>
@@ -1110,8 +1075,6 @@ const PremiumProfileView: React.FC<{
     </div>
   );
 };
-
-// --- ADDING MISSING COMPONENTS ---
 
 const OnboardingStep: React.FC<{ 
   profile: UserProfile; 
@@ -1289,9 +1252,12 @@ const AuthView: React.FC<{
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  // Removed isSignUp state as we now have two buttons
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  
+  // Forgot Password Modal State
+  const [showForgotPass, setShowForgotPass] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
 
   const handleAuth = async (mode: 'login' | 'signup') => {
     if(!email.trim() || !password.trim()) {
@@ -1327,6 +1293,19 @@ const AuthView: React.FC<{
       setLoading(false);
     }
   };
+  
+  const handleResetPassword = async () => {
+    if(!resetEmail.trim()) return;
+    try {
+      await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+        redirectTo: window.location.origin
+      });
+      alert("Password reset link sent to your email!");
+      setShowForgotPass(false);
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden flex flex-col items-center justify-center p-6 text-white font-sans">
@@ -1352,8 +1331,28 @@ const AuthView: React.FC<{
             </div>
          </div>
 
-         <TiltCard className="bg-black/40 backdrop-blur-xl rounded-[40px] p-8 border border-[#007AFF]/30 shadow-[0_0_50px_rgba(0,122,255,0.2)]">
-            {/* Removed Top Toggle Switch */}
+         <TiltCard className="bg-black/40 backdrop-blur-xl rounded-[40px] p-8 border border-[#007AFF]/30 shadow-[0_0_50px_rgba(0,122,255,0.2)] relative">
+            
+            {/* Google Sign In Button */}
+            <div className="mb-6">
+                <button 
+                  type="button"
+                  className="w-full h-12 rounded-full font-semibold text-white bg-white/10 hover:bg-white/15 border border-white/20 active:scale-95 transition-all flex items-center justify-center gap-3"
+                  onClick={() => alert("Google Sign-In coming soon!")}
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84z" />
+                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                  </svg>
+                  Continue with Google
+                </button>
+                <div className="relative py-4">
+                   <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
+                   <div className="relative flex justify-center text-[10px] font-bold tracking-widest uppercase"><span className="bg-[#050505] px-2 text-gray-500 rounded-full">Or with Email</span></div>
+                </div>
+            </div>
 
             <form onSubmit={(e) => { e.preventDefault(); handleAuth('login'); }} className="space-y-6">
                <div>
@@ -1393,6 +1392,16 @@ const AuthView: React.FC<{
                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                      </button>
                   </div>
+                  {/* Forgot Password Link */}
+                  <div className="flex justify-end mt-2">
+                     <button 
+                       type="button" 
+                       onClick={() => setShowForgotPass(true)}
+                       className="text-xs text-[#007AFF] hover:text-blue-400 font-medium"
+                     >
+                       Forgot Password?
+                     </button>
+                  </div>
                </div>
                
                {errorMsg && (
@@ -1416,11 +1425,6 @@ const AuthView: React.FC<{
                      )}
                   </MagneticButton>
                   
-                  <div className="relative py-2">
-                     <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
-                     <div className="relative flex justify-center text-[10px] font-bold tracking-widest uppercase"><span className="bg-[#050505] px-4 text-gray-500 rounded-full">New Here?</span></div>
-                  </div>
-
                   <button 
                     type="button"
                     onClick={() => handleAuth('signup')}
@@ -1437,6 +1441,35 @@ const AuthView: React.FC<{
                    Continue as Guest <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
                 </button>
             </div>
+
+            {/* Forgot Password Modal */}
+            {showForgotPass && (
+              <div className="absolute inset-0 bg-black/90 backdrop-blur-md rounded-[40px] z-50 flex flex-col items-center justify-center p-6 animate-in fade-in duration-300">
+                  <h3 className="text-xl font-bold mb-4 text-white">Reset Password</h3>
+                  <p className="text-sm text-gray-400 mb-6 text-center">Enter your email to receive a reset link.</p>
+                  <input 
+                    type="email" 
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    placeholder="Email address"
+                    className="w-full bg-white/10 border border-white/20 rounded-xl p-3 text-white mb-4 outline-none focus:border-[#007AFF]"
+                  />
+                  <div className="flex gap-3 w-full">
+                    <button 
+                      onClick={() => setShowForgotPass(false)}
+                      className="flex-1 py-3 rounded-xl bg-white/10 text-white font-medium hover:bg-white/20"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={handleResetPassword}
+                      className="flex-1 py-3 rounded-xl bg-[#007AFF] text-white font-medium hover:bg-blue-600 shadow-lg shadow-blue-500/30"
+                    >
+                      Send
+                    </button>
+                  </div>
+              </div>
+            )}
          </TiltCard>
          
          <div className="mt-8 flex justify-center gap-6 opacity-40 hover:opacity-100 transition-opacity duration-300">
@@ -1897,53 +1930,72 @@ const App: React.FC = () => {
           setCurrentView('ONBOARDING');
        }
     } else {
-       setCurrentView('ONBOARDING');
+       // Fallback if session isn't ready immediately but auth happened
+       setCurrentView('PAYWALL'); 
     }
-  };
-
-  const handleOnboardingComplete = async () => {
-      const updatedProfile = calculateMacros(profile);
-      setProfile({ ...updatedProfile, hasOnboarded: true });
-
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      
-      if (currentSession?.user?.id) {
-          const { error } = await supabase.from('profiles').upsert({
-             id: currentSession.user.id,
-             name: updatedProfile.name,
-             age: updatedProfile.age,
-             gender: updatedProfile.gender,
-             height: updatedProfile.height,
-             weight: updatedProfile.weight,
-             goal: updatedProfile.goal,
-             activity_level: updatedProfile.activityLevel,
-             has_onboarded: true,
-             is_premium: updatedProfile.isPremium,
-             targets: {
-                targetCalories: updatedProfile.targetCalories,
-                targetProtein: updatedProfile.targetProtein,
-                targetCarbs: updatedProfile.targetCarbs,
-                targetFat: updatedProfile.targetFat,
-                targetFiber: updatedProfile.targetFiber,
-                targetSugar: updatedProfile.targetSugar,
-                maxSodium: updatedProfile.maxSodium,
-                maxCholesterol: updatedProfile.maxCholesterol,
-             },
-             preferences: updatedProfile.preferences
-          });
-           if (error) console.error("Error saving profile:", error);
-      }
-
-      setCurrentView('PAYWALL');
   };
 
   const handleSubscribe = async () => {
-    const { data: { session: currentSession } } = await supabase.auth.getSession();
-    if (currentSession?.user?.id) {
-       await supabase.from('profiles').update({ is_premium: true }).eq('id', currentSession.user.id);
+    if (isGuest) {
+        setProfile(p => ({ ...p, isPremium: true }));
+        setCurrentView('DASHBOARD');
+        return;
+    }
+    if (session?.user?.id) {
+        await supabase.from('profiles').update({ is_premium: true }).eq('id', session.user.id);
     }
     setProfile(p => ({ ...p, isPremium: true }));
     setCurrentView('DASHBOARD');
+  };
+
+  const handleOnboardingComplete = async () => {
+    const finalProfile = calculateMacros(profile);
+    
+    if (isGuest) {
+       setProfile({ ...finalProfile, hasOnboarded: true });
+       setCurrentView('PAYWALL');
+       return;
+    }
+
+    if (session?.user?.id) {
+       const { error } = await supabase.from('profiles').upsert({
+         id: session.user.id,
+         name: finalProfile.name,
+         age: finalProfile.age,
+         gender: finalProfile.gender,
+         height: finalProfile.height,
+         weight: finalProfile.weight,
+         goal: finalProfile.goal,
+         activity_level: finalProfile.activityLevel,
+         targets: {
+            targetCalories: finalProfile.targetCalories,
+            targetProtein: finalProfile.targetProtein,
+            targetCarbs: finalProfile.targetCarbs,
+            targetFat: finalProfile.targetFat,
+            targetFiber: finalProfile.targetFiber,
+            targetSugar: finalProfile.targetSugar,
+            maxSodium: finalProfile.maxSodium,
+            maxCholesterol: finalProfile.maxCholesterol
+         },
+         preferences: finalProfile.preferences,
+         has_onboarded: true,
+         updated_at: new Date()
+       });
+       
+       if (error) {
+          console.error('Error saving profile:', error);
+       }
+    }
+
+    setProfile({ ...finalProfile, hasOnboarded: true });
+    setCurrentView('PAYWALL');
+  };
+  
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+    setProfile(INITIAL_PROFILE);
+    setCurrentView('AUTH');
   };
 
   const handleCameraClick = () => {
@@ -1952,586 +2004,412 @@ const App: React.FC = () => {
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64String = reader.result as string;
-      setCapturedImage(base64String);
-      setIsAnalyzing(true);
-      setCurrentView('CAMERA');
-      
-      try {
-        const result = await analyzeFoodImage(base64String);
-        if (result.confidence === 0 && result.foodName === "Unknown Food") {
-          alert(result.description);
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64String = reader.result as string;
+        setCapturedImage(base64String);
+        setCurrentView('CAMERA'); // Shows ProcessingView because isAnalyzing becomes true
+        setIsAnalyzing(true);
+        
+        try {
+            const result = await analyzeFoodImage(base64String);
+            setAnalysisResult(result);
+            setEditForm(result); 
+            setIsAnalyzing(false);
+            setCurrentView('REVIEW');
+        } catch (e) {
+            console.error(e);
+            setIsAnalyzing(false);
+            alert("Analysis failed. Please try again.");
+            setCurrentView('DASHBOARD');
         }
-        setAnalysisResult(result);
-        setEditForm(result); 
-        setCurrentView('REVIEW');
-      } catch (e) {
-        alert("Failed to analyze image. Please try again.");
-        setCurrentView('DASHBOARD');
-      } finally {
-        setIsAnalyzing(false);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleEditChange = (field: keyof AIAnalysisResult, value: string | number) => {
-    if (!editForm) return;
-    setEditForm({
-      ...editForm,
-      [field]: value
-    });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSaveFood = async () => {
-    if (editForm) {
-      const time = new Date();
-      const hour = time.getHours();
-      let mealType: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack' = 'Snack';
-      
-      if (hour >= 5 && hour < 11) mealType = 'Breakfast';
-      else if (hour >= 11 && hour < 16) mealType = 'Lunch';
-      else if (hour >= 16 && hour < 22) mealType = 'Dinner';
+    if (!editForm) return;
 
-      const newItem: FoodLogItem = {
-        ...editForm,
-        id: `temp-${Date.now()}`, 
-        timestamp: Date.now(),
-        mealType: mealType,
-        name: editForm.foodName,
-        imageUrl: capturedImage || undefined
-      };
+    const newFood: FoodLogItem = {
+      id: Date.now().toString(),
+      name: editForm.foodName,
+      calories: editForm.calories,
+      protein: editForm.protein,
+      carbs: editForm.carbs,
+      fat: editForm.fat,
+      fiber: editForm.fiber,
+      sugar: editForm.sugar,
+      sodium: editForm.sodium,
+      cholesterol: editForm.cholesterol,
+      timestamp: Date.now(),
+      mealType: 'Snack', // Default, could be improved with user selection
+      imageUrl: capturedImage || undefined,
+      confidence: editForm.confidence
+    };
 
-      const updatedLog = {
-        ...todayLog,
-        items: [newItem, ...todayLog.items]
-      };
+    const newItems = [newFood, ...todayLog.items];
+    const newLog = { ...todayLog, items: newItems };
+    setTodayLog(newLog);
 
-      setTodayLog(updatedLog);
-      setCurrentView('DASHBOARD');
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 4000);
-      
-      setCapturedImage(null);
-      setAnalysisResult(null);
-      setEditForm(null);
-
-      checkAchievements(updatedLog, profile);
-
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      if (currentSession?.user?.id) {
-        const { error } = await supabase.from('food_logs').insert({
-          user_id: currentSession.user.id,
-          date: selectedDate, // Use the selected date to allow back-logging
-          meal_type: mealType,
-          name: editForm.foodName,
-          calories: editForm.calories,
-          protein: editForm.protein,
-          carbs: editForm.carbs,
-          fat: editForm.fat,
-          fiber: editForm.fiber,
-          sugar: editForm.sugar,
-          sodium: editForm.sodium,
-          cholesterol: editForm.cholesterol,
-          confidence: editForm.confidence,
-          image_url: capturedImage,
-        });
-
-        if (error) console.error("Error saving food:", error);
-        else fetchUserData(currentSession.user.id, selectedDate);
-      }
+    if (!isGuest && session?.user?.id) {
+       await supabase.from('food_logs').insert({
+          user_id: session.user.id,
+          date: selectedDate,
+          meal_type: newFood.mealType,
+          name: newFood.name,
+          calories: newFood.calories,
+          protein: newFood.protein,
+          carbs: newFood.carbs,
+          fat: newFood.fat,
+          fiber: newFood.fiber,
+          sugar: newFood.sugar,
+          sodium: newFood.sodium,
+          cholesterol: newFood.cholesterol,
+          confidence: newFood.confidence,
+          image_url: capturedImage
+       });
     }
+
+    checkAchievements(newLog, profile);
+    
+    // Trigger confetti
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 3000);
+
+    setCurrentView('DASHBOARD');
+    setCapturedImage(null);
+    setAnalysisResult(null);
+    setEditForm(null);
   };
 
   const handleAddWater = async (amount: number) => {
-    const updatedLog = { ...todayLog, waterIntake: (todayLog.waterIntake || 0) + amount };
-    setTodayLog(updatedLog);
+     const newTotal = todayLog.waterIntake + amount;
+     const newLog = { ...todayLog, waterIntake: newTotal };
+     setTodayLog(newLog);
 
-    checkAchievements(updatedLog, profile);
-
-    const { data: { session: currentSession } } = await supabase.auth.getSession();
-    if (currentSession?.user?.id) {
-      const { error } = await supabase.from('water_logs').insert({
-        user_id: currentSession.user.id,
-        date: selectedDate, // Use selected date
-        amount: amount
-      });
-      
-      if (error) console.error("Error saving water:", error);
-    }
-  };
-  
-  const handleUpdateProfile = async (newProfile: UserProfile) => {
-     const calculated = calculateMacros(newProfile);
-     setProfile(calculated);
-
-     const { data: { session: currentSession } } = await supabase.auth.getSession();
-     if (currentSession?.user?.id) {
-       await supabase.from('profiles').update({
-         weight: calculated.weight,
-         height: calculated.height,
-         age: calculated.age,
-         preferences: calculated.preferences,
-         targets: {
-            targetCalories: calculated.targetCalories,
-            targetProtein: calculated.targetProtein,
-            targetCarbs: calculated.targetCarbs,
-            targetFat: calculated.targetFat,
-            targetFiber: calculated.targetFiber,
-            targetSugar: calculated.targetSugar,
-            maxSodium: calculated.maxSodium,
-            maxCholesterol: calculated.maxCholesterol,
-         }
-       }).eq('id', currentSession.user.id);
+     if (!isGuest && session?.user?.id) {
+        await supabase.from('water_logs').insert({
+           user_id: session.user.id,
+           date: selectedDate,
+           amount: amount
+        });
      }
-  };
-  
-  const handleLogout = async () => {
-     await supabase.auth.signOut();
-     setIsGuest(false);
-     setProfile(INITIAL_PROFILE);
-     setTodayLog(INITIAL_LOG);
-     setCurrentView('AUTH');
+     
+     checkAchievements(newLog, profile);
   };
 
-  // --- Views ---
+  const renderView = () => {
+    // If analyzing image, show Processing View
+    if (currentView === 'CAMERA' && isAnalyzing) {
+       return <ProcessingView image={capturedImage} />;
+    }
 
-  if (isDataLoading && (currentView === 'ONBOARDING' || currentView === 'DASHBOARD')) {
-      return <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center"><Loader2 className="animate-spin text-[#007AFF] w-8 h-8" /></div>;
-  }
-
-  if (currentView === 'ONBOARDING') {
-    return <OnboardingStep profile={profile} setProfile={setProfile} onComplete={handleOnboardingComplete} isLoading={isDataLoading} />;
-  }
-
-  if (currentView === 'AUTH') {
-    return <AuthView onSuccess={handleAuthSuccess} onSkip={handleGuestContinue} profile={profile} setProfile={setProfile} />;
-  }
-
-  if (currentView === 'PAYWALL') {
-    return <Paywall onSubscribe={handleSubscribe} />;
-  }
-
-  if (currentView === 'CAMERA') {
-    return <ProcessingView image={capturedImage} />;
-  }
-
-  if (currentView === 'PROGRESS') {
-     return (
-        <div className="h-full">
-           <ProgressDashboard log={todayLog} profile={profile} />
-           <Navigation currentView={currentView} onNavigate={setCurrentView} onCameraClick={handleCameraClick} />
-        </div>
-     );
-  }
-
-  if (currentView === 'AWARDS') {
-     return (
-        <div className="h-full">
-           <AwardsView profile={profile} />
-           <Navigation currentView={currentView} onNavigate={setCurrentView} onCameraClick={handleCameraClick} />
-        </div>
-     );
-  }
-  
-  if (currentView === 'PROFILE') {
-     return (
-        <div className="h-full">
-           <PremiumProfileView profile={profile} weeklyStats={consistencyHistory} onUpdate={handleUpdateProfile} onLogout={handleLogout} />
-           <Navigation currentView={currentView} onNavigate={setCurrentView} onCameraClick={handleCameraClick} />
-        </div>
-     );
-  }
-
-  if (currentView === 'REVIEW') {
-    return (
-      <div className="fixed inset-0 z-50 flex flex-col ios-slide-up">
-        <div className="absolute inset-0 bg-black" onClick={() => setCurrentView('DASHBOARD')}>
-           {capturedImage && <img src={capturedImage} className="w-full h-full object-cover opacity-80" alt="Captured" />}
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 bg-[#F2F2F7] dark:bg-[#1C1C1E] rounded-t-[32px] overflow-hidden flex flex-col h-[85%] shadow-[0_-10px_40px_rgba(0,0,0,0.3)]">
-          <div className="bg-white dark:bg-[#2C2C2E] px-6 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-700 sticky top-0 z-10">
-             <button onClick={() => setCurrentView('DASHBOARD')} className="text-[#007AFF] text-[17px]">Cancel</button>
-             <div className="font-semibold text-[17px] dark:text-white">Edit Entry</div>
-             <button onClick={handleSaveFood} className="text-[#007AFF] font-bold text-[17px]">Add</button>
-          </div>
-          
-          <div className="overflow-y-auto flex-1 p-6 pb-20">
-             <div className="flex flex-col items-center mb-6">
-                <div className="w-24 h-24 rounded-full shadow-lg mb-4 overflow-hidden border-4 border-white dark:border-gray-800">
-                  {capturedImage && <img src={capturedImage} className="w-full h-full object-cover" alt="Food" />}
-                </div>
-                
-                <input 
-                  type="text"
-                  value={editForm?.foodName || ''}
-                  onChange={(e) => handleEditChange('foodName', e.target.value)}
-                  className="text-2xl font-bold text-center text-gray-900 dark:text-white bg-transparent border-b border-gray-300 dark:border-gray-700 focus:border-[#007AFF] outline-none w-full max-w-xs"
-                />
-                
-                <div className="flex items-center gap-1.5 mt-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-3 py-1 rounded-full">
-                   <Award size={14} />
-                   <span className="text-xs font-bold">{analysisResult?.confidence}% Match</span>
-                </div>
-             </div>
-
-             <div className="bg-white dark:bg-[#2C2C2E] rounded-2xl p-6 shadow-sm mb-6 flex justify-between items-center border border-gray-100 dark:border-gray-700">
-                <div className="text-center flex-1 border-r border-gray-100 dark:border-gray-700">
-                   <input 
-                      type="number"
-                      value={editForm?.calories || 0}
-                      onChange={(e) => handleEditChange('calories', parseInt(e.target.value) || 0)}
-                      className="text-3xl font-extrabold text-gray-900 dark:text-white w-full text-center bg-transparent outline-none"
-                   />
-                   <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Calories</div>
-                </div>
-                <div className="text-center w-16 px-1">
-                   <input 
-                      type="number"
-                      value={editForm?.protein || 0}
-                      onChange={(e) => handleEditChange('protein', parseInt(e.target.value) || 0)}
-                      className="text-xl font-bold text-gray-900 dark:text-white w-full text-center bg-transparent outline-none"
-                   />
-                   <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Prot</div>
-                </div>
-                <div className="text-center w-16 px-1">
-                   <input 
-                      type="number"
-                      value={editForm?.carbs || 0}
-                      onChange={(e) => handleEditChange('carbs', parseInt(e.target.value) || 0)}
-                      className="text-xl font-bold text-gray-900 dark:text-white w-full text-center bg-transparent outline-none"
-                   />
-                   <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Carb</div>
-                </div>
-                <div className="text-center w-16 px-1">
-                   <input 
-                      type="number"
-                      value={editForm?.fat || 0}
-                      onChange={(e) => handleEditChange('fat', parseInt(e.target.value) || 0)}
-                      className="text-xl font-bold text-gray-900 dark:text-white w-full text-center bg-transparent outline-none"
-                   />
-                   <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Fat</div>
-                </div>
-             </div>
-
-             <div className="bg-white dark:bg-[#2C2C2E] rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700">
-                <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                   <span className="text-gray-900 dark:text-white">Description</span>
-                   <span className="text-gray-500 dark:text-gray-400 text-sm text-right max-w-[60%]">{analysisResult?.description}</span>
-                </div>
-                <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                   <span className="text-gray-900 dark:text-white">Sugar (g)</span>
-                   <input 
-                      type="number"
-                      value={editForm?.sugar || 0}
-                      onChange={(e) => handleEditChange('sugar', parseInt(e.target.value) || 0)}
-                      className="text-right text-[#007AFF] font-medium bg-transparent outline-none w-20"
-                   />
-                </div>
-                <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                   <span className="text-gray-900 dark:text-white">Fiber (g)</span>
-                   <input 
-                      type="number"
-                      value={editForm?.fiber || 0}
-                      onChange={(e) => handleEditChange('fiber', parseInt(e.target.value) || 0)}
-                      className="text-right text-[#007AFF] font-medium bg-transparent outline-none w-20"
-                   />
-                </div>
-                <div className="p-4 flex justify-between items-center">
-                   <span className="text-gray-900 dark:text-white">Meal Type</span>
-                   <span className="text-[#007AFF] text-sm font-medium">Auto-detected</span>
-                </div>
-             </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const totalCalories = todayLog.items.reduce((acc, item) => acc + item.calories, 0);
-  const totalProtein = todayLog.items.reduce((acc, item) => acc + item.protein, 0);
-  const totalCarbs = todayLog.items.reduce((acc, item) => acc + item.carbs, 0);
-  const totalFat = todayLog.items.reduce((acc, item) => acc + item.fat, 0);
-  
-  const remainingCalories = Math.max(0, profile.targetCalories - totalCalories);
-
-  const groupedMeals = {
-     Breakfast: todayLog.items.filter(i => i.mealType === 'Breakfast'),
-     Lunch: todayLog.items.filter(i => i.mealType === 'Lunch'),
-     Dinner: todayLog.items.filter(i => i.mealType === 'Dinner'),
-     Snack: todayLog.items.filter(i => i.mealType === 'Snack'),
-  };
-  const mealOrder = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
-
-  return (
-    <div className="h-full bg-[#F2F2F7] dark:bg-black font-sans text-slate-900 dark:text-white pb-24 overflow-y-auto transition-colors duration-500">
-      <Confetti active={showConfetti} />
-      
-      {justUnlockedAchievement && (
-         <AchievementUnlockModal 
-            achievement={justUnlockedAchievement} 
-            onClose={() => setJustUnlockedAchievement(null)} 
-         />
-      )}
-
-      <style>{`
-         @keyframes blob-bounce {
-           0%, 100% { transform: translate(0, 0) scale(1); }
-           33% { transform: translate(30px, -50px) scale(1.1); }
-           66% { transform: translate(-20px, 20px) scale(0.9); }
-         }
-         .animate-blob-bounce {
-            animation: blob-bounce 10s infinite alternate ease-in-out;
-         }
-         @keyframes chromatic-move {
-            0% { transform: translate(0,0) scale(1); opacity: 0.6; }
-            20% { transform: translate(-2px, 1px) scale(1.01); opacity: 0.5; }
-            40% { transform: translate(1px, -1px) scale(0.99); opacity: 0.4; }
-            60% { transform: translate(-1px, 2px) scale(1.02); opacity: 0.6; }
-            80% { transform: translate(2px, -2px) scale(0.98); opacity: 0.5; }
-            100% { transform: translate(0,0) scale(1); opacity: 0.6; }
-         }
-         .animate-chromatic-move {
-            animation: chromatic-move 2s infinite linear;
-         }
-         @keyframes scan-laser {
-            0% { top: 0%; opacity: 0; }
-            10% { opacity: 1; box-shadow: 0 0 20px #fff, 0 0 10px #007AFF; }
-            90% { opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-         }
-         .animate-scan-laser {
-            animation: scan-laser 2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
-         }
-         @keyframes glitch-text {
-            0% { transform: translate(0); text-shadow: 0 0 0 transparent; }
-            2% { transform: translate(-2px, 1px); text-shadow: 2px 0 #007AFF, -2px 0 #FF2D55; }
-            4% { transform: translate(0); text-shadow: 0 0 0 transparent; }
-            100% { transform: translate(0); }
-         }
-         .animate-glitch-text:hover {
-            animation: glitch-text 0.5s infinite;
-         }
-         @keyframes breathe {
-            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255,255,255,0.2)); }
-            50% { transform: scale(1.03); filter: drop-shadow(0 0 10px rgba(255,255,255,0.4)); }
-         }
-         @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-         }
-         .ring-breathe {
-            animation: breathe 3s ease-in-out infinite;
-         }
-         @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(20px) scale(0.98); }
-            to { opacity: 1; transform: translateX(0) scale(1); }
-         }
-         .animate-slide-in-right {
-            animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-         }
-      `}</style>
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        accept="image/*" 
-        capture="environment"
-        className="hidden" 
-        onChange={handleFileChange}
-      />
-
-      <div className="bg-[#F2F2F7]/90 dark:bg-black/90 pt-safe px-5 pb-2 sticky top-0 z-40 backdrop-blur-xl transition-colors duration-500 border-b border-transparent dark:border-gray-800">
-        <div className="flex justify-between items-end mb-1">
-           <div className="flex flex-col">
-             <span className="text-gray-500 dark:text-gray-400 font-semibold text-xs uppercase tracking-wider mb-1">
-               {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-             </span>
-             <h1 className="text-[34px] font-bold text-black dark:text-white tracking-tight leading-none">Journal</h1>
-           </div>
-           <button onClick={() => setCurrentView('PROFILE')} className="mb-1 transform transition-transform active:scale-90">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-300 font-bold text-sm border border-white/50 dark:border-white/10 shadow-sm">
-                 {profile.name ? profile.name[0] : 'ME'}
-              </div>
-           </button>
-        </div>
-      </div>
-
-      <WeekCalendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
-
-      <div className="px-5 mt-3 space-y-6">
-        
-        <div className="relative overflow-hidden rounded-[32px] bg-[#054F44] dark:bg-[#04332c] text-white shadow-xl transform transition-all hover:scale-[1.01] duration-300">
-           <ParticleSystem />
-           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-           <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-400/10 rounded-full blur-3xl -ml-12 -mb-12 pointer-events-none"></div>
-
-           <div className="relative z-10 p-6">
-              <div className="flex justify-between items-center mb-8 mt-2">
-                 <div className="text-center w-20">
-                    <div className="text-2xl font-bold tracking-tight">{totalCalories}</div>
-                    <div className="text-[10px] font-bold text-emerald-200/80 uppercase tracking-widest mt-0.5">Eaten</div>
-                 </div>
-
-                 <div className="relative w-44 h-44 flex items-center justify-center">
-                    <svg viewBox="0 0 200 200" className="w-full h-full transform -rotate-90 drop-shadow-2xl overflow-visible">
-                        <defs>
-                            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="#34D399" />
-                                <stop offset="100%" stopColor="#ffffff" />
-                            </linearGradient>
-                            <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
-                                <feGaussianBlur stdDeviation="4" result="blur" />
-                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                            </filter>
-                        </defs>
-
-                        <circle
-                            cx="100"
-                            cy="100"
-                            r="80"
-                            fill="none"
-                            stroke="rgba(255,255,255,0.1)"
-                            strokeWidth="14"
-                            strokeLinecap="round"
+    switch (currentView) {
+      case 'AUTH':
+        return <AuthView onSuccess={handleAuthSuccess} onSkip={handleGuestContinue} profile={profile} setProfile={setProfile} />;
+      case 'ONBOARDING':
+        return <OnboardingStep profile={profile} setProfile={setProfile} onComplete={handleOnboardingComplete} isLoading={false} />;
+      case 'PAYWALL':
+        return <Paywall onSubscribe={handleSubscribe} />;
+      case 'REVIEW':
+         if (!editForm) return null;
+         return (
+            <div className="min-h-screen bg-[#F2F2F7] dark:bg-black p-6 pb-24 font-sans">
+               <div className="max-w-md mx-auto space-y-6">
+                  <div className="relative rounded-[32px] overflow-hidden shadow-lg h-64 border border-gray-200 dark:border-gray-800">
+                     <img src={capturedImage || ''} alt="Captured food" className="w-full h-full object-cover" />
+                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                     <div className="absolute bottom-4 left-4 right-4">
+                        <input 
+                           value={editForm.foodName}
+                           onChange={e => setEditForm({...editForm, foodName: e.target.value})}
+                           className="text-3xl font-bold text-white bg-transparent border-none outline-none w-full placeholder-white/50 drop-shadow-md"
+                           placeholder="Food Name"
                         />
+                     </div>
+                  </div>
 
-                        <circle
-                            cx="100"
-                            cy="100"
-                            r="80"
-                            fill="none"
-                            stroke="url(#progressGradient)"
-                            strokeWidth="14"
-                            strokeDasharray={2 * Math.PI * 80}
-                            strokeDashoffset={2 * Math.PI * 80 * (1 - Math.min(1, totalCalories / profile.targetCalories))}
-                            strokeLinecap="round"
-                            className="transition-all duration-1000 ease-[cubic-bezier(0.4,0,0.2,1)]"
-                            style={{ filter: "url(#glow)" }}
-                        />
-                        
-                        <circle
-                            cx="100"
-                            cy="100"
-                            r="65"
-                            fill="none"
-                            stroke="rgba(255,255,255,0.1)"
-                            strokeWidth="1"
-                            strokeDasharray="4 4"
-                        />
-                    </svg>
-
-                    <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-                       <div className="text-4xl font-bold tracking-tighter text-white drop-shadow-md">{remainingCalories}</div>
-                       <div className="text-[10px] font-bold text-emerald-100 uppercase tracking-widest mt-1">Kcal Left</div>
-                    </div>
-                 </div>
-
-                 <div className="text-center w-20">
-                    <div className="text-2xl font-bold tracking-tight">0</div>
-                    <div className="text-[10px] font-bold text-emerald-200/80 uppercase tracking-widest mt-0.5">Burned</div>
-                 </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-6 border-t border-white/10 pt-5">
-                 <div className="flex flex-col items-center">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-200/80 mb-1.5">Carbs</span>
-                    <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden mb-1.5">
-                       <div className="h-full bg-white rounded-full" style={{ width: `${Math.min(100, (totalCarbs / profile.targetCarbs) * 100)}%` }}></div>
-                    </div>
-                    <span className="text-xs font-medium">{totalCarbs} / {profile.targetCarbs}g</span>
-                 </div>
-                 <div className="flex flex-col items-center">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-200/80 mb-1.5">Protein</span>
-                    <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden mb-1.5">
-                       <div className="h-full bg-white rounded-full" style={{ width: `${Math.min(100, (totalProtein / profile.targetProtein) * 100)}%` }}></div>
-                    </div>
-                    <span className="text-xs font-medium">{totalProtein} / {profile.targetProtein}g</span>
-                 </div>
-                 <div className="flex flex-col items-center">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-200/80 mb-1.5">Fat</span>
-                    <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden mb-1.5">
-                       <div className="h-full bg-white rounded-full" style={{ width: `${Math.min(100, (totalFat / profile.targetFat) * 100)}%` }}></div>
-                    </div>
-                    <span className="text-xs font-medium">{totalFat} / {profile.targetFat}g</span>
-                 </div>
-              </div>
-           </div>
-        </div>
-
-        <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 fill-mode-backwards">
-            <WaterTracker intake={todayLog.waterIntake || 0} onAdd={handleAddWater} />
-        </div>
-
-        <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200 fill-mode-backwards">
-           <div className="flex justify-between items-center mb-3">
-             <h2 className="text-[22px] font-bold text-black dark:text-white tracking-tight">Meals</h2>
-             <button onClick={handleCameraClick} className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-blue-600 dark:text-blue-400 active:scale-90 transition-transform"><Plus size={20} /></button>
-           </div>
-           
-           <div className="space-y-5">
-             {todayLog.items.length === 0 ? (
-               <div className="bg-white dark:bg-[#1C1C1E] rounded-[22px] p-8 text-center shadow-sm border border-gray-100 dark:border-gray-800">
-                  <p className="text-gray-400 font-medium">No meals tracked for this day</p>
-                  <button onClick={handleCameraClick} className="text-[#007AFF] font-medium text-sm mt-2">Tap + to add breakfast</button>
-               </div>
-             ) : (
-                mealOrder.map(mealType => {
-                   const meals = groupedMeals[mealType as keyof typeof groupedMeals];
-                   if (meals.length === 0) return null;
-                   
-                   return (
-                     <div key={mealType}>
-                        <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2 ml-1">{mealType}</h3>
-                        <div className="space-y-2">
-                        {meals.map((item, index) => (
-                          <div 
-                            key={item.id} 
-                            className="bg-white dark:bg-[#1C1C1E] rounded-[20px] p-3 flex items-center gap-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)] active:scale-[0.98] transition-all border border-gray-50 dark:border-gray-800/50 animate-slide-in-right"
-                            style={{ animationDelay: `${index * 100}ms` }}
-                          >
-                              <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 overflow-hidden shrink-0 relative">
-                                {item.imageUrl ? (
-                                  <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.name} />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-800">
-                                      <Utensils size={20} className="text-gray-300 dark:text-gray-600" />
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-baseline mb-1">
-                                    <h4 className="font-semibold text-gray-900 dark:text-white truncate text-[17px]">{item.name}</h4>
-                                    <span className="text-gray-400 text-xs">{new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                                </div>
-                                <div className="flex items-center gap-3 text-sm">
-                                    <span className="font-bold text-gray-800 dark:text-gray-200">{item.calories} kcal</span>
-                                    <span className="w-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full"></span>
-                                    <span className="text-gray-500 text-xs font-medium">{item.protein}p • {item.carbs}c • {item.fat}f</span>
-                                </div>
-                              </div>
-                              <ChevronRight className="text-gray-300 dark:text-gray-600 w-5 h-5" />
-                          </div>
-                        ))}
+                  <div className="bg-white dark:bg-[#1C1C1E] rounded-[32px] p-6 shadow-sm border border-gray-100 dark:border-gray-800 animate-in slide-in-from-bottom-10">
+                     <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white flex items-center gap-2">
+                        <Activity size={20} className="text-[#007AFF]" /> Nutritional Info
+                     </h3>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-gray-50 dark:bg-black p-4 rounded-2xl">
+                           <label className="text-xs text-gray-500 font-bold uppercase">Calories</label>
+                           <input 
+                              type="number" 
+                              value={editForm.calories} 
+                              onChange={e => setEditForm({...editForm, calories: parseInt(e.target.value) || 0})}
+                              className="text-2xl font-black text-[#007AFF] bg-transparent w-full outline-none" 
+                           />
+                        </div>
+                        <div className="bg-gray-50 dark:bg-black p-4 rounded-2xl">
+                           <label className="text-xs text-gray-500 font-bold uppercase">Protein (g)</label>
+                           <input 
+                              type="number" 
+                              value={editForm.protein} 
+                              onChange={e => setEditForm({...editForm, protein: parseInt(e.target.value) || 0})}
+                              className="text-2xl font-black text-[#34C759] bg-transparent w-full outline-none" 
+                           />
+                        </div>
+                        <div className="bg-gray-50 dark:bg-black p-4 rounded-2xl">
+                           <label className="text-xs text-gray-500 font-bold uppercase">Carbs (g)</label>
+                           <input 
+                              type="number" 
+                              value={editForm.carbs} 
+                              onChange={e => setEditForm({...editForm, carbs: parseInt(e.target.value) || 0})}
+                              className="text-2xl font-black text-[#FF9500] bg-transparent w-full outline-none" 
+                           />
+                        </div>
+                        <div className="bg-gray-50 dark:bg-black p-4 rounded-2xl">
+                           <label className="text-xs text-gray-500 font-bold uppercase">Fat (g)</label>
+                           <input 
+                              type="number" 
+                              value={editForm.fat} 
+                              onChange={e => setEditForm({...editForm, fat: parseInt(e.target.value) || 0})}
+                              className="text-2xl font-black text-[#FF2D55] bg-transparent w-full outline-none" 
+                           />
                         </div>
                      </div>
-                   );
-                })
-             )}
-           </div>
-        </div>
-      </div>
+                  </div>
+                  
+                  <div className="flex gap-3 pt-4">
+                     <Button variant="secondary" onClick={() => setCurrentView('DASHBOARD')} className="flex-1 py-4">Discard</Button>
+                     <Button onClick={handleSaveFood} className="flex-[2] py-4 bg-[#007AFF] text-white shadow-lg shadow-blue-500/30">Save to Journal</Button>
+                  </div>
+               </div>
+            </div>
+         );
+      case 'DASHBOARD':
+        // Calculate remaining calories
+        const totalCalories = todayLog.items.reduce((acc, item) => acc + item.calories, 0);
+        const caloriesLeft = profile.targetCalories - totalCalories;
+        
+        return (
+          <div className="h-full pb-24 bg-[#F2F2F7] dark:bg-black overflow-y-auto transition-colors duration-500 font-sans">
+            <WeekCalendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+            
+            <div className="p-5 space-y-6">
+               {/* Hero Card - Classic Version Remake */}
+               <div className="w-full bg-[#053F36] rounded-[32px] p-6 text-white shadow-2xl relative overflow-hidden font-sans">
+                  {/* Background Effects */}
+                  <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,_#0d5e52_0%,_#053F36_100%)]"></div>
+                  
+                  {/* Subtle Particles/Stars */}
+                  {[...Array(6)].map((_, i) => (
+                    <div 
+                        key={i}
+                        className="absolute rounded-full bg-white/20 blur-[1px]"
+                        style={{
+                            top: `${Math.random() * 100}%`,
+                            left: `${Math.random() * 100}%`,
+                            width: `${Math.random() * 4 + 2}px`,
+                            height: `${Math.random() * 4 + 2}px`,
+                            opacity: Math.random() * 0.5 + 0.2
+                        }}
+                    ></div>
+                  ))}
 
-      <Navigation 
-        currentView={currentView} 
-        onNavigate={setCurrentView} 
-        onCameraClick={handleCameraClick}
-      />
-    </div>
+                  <div className="relative z-10">
+                      {/* Top Section: Stats & Ring */}
+                      <div className="flex justify-between items-center mb-10 mt-2">
+                         {/* Eaten */}
+                         <div className="flex flex-col items-center min-w-[80px]">
+                            <span className="text-3xl font-bold tracking-tight">{totalCalories}</span>
+                            <span className="text-[10px] font-bold text-emerald-100/60 tracking-widest uppercase mt-1">Eaten</span>
+                         </div>
+
+                         {/* Central Ring */}
+                         <div className="relative w-44 h-44 flex items-center justify-center -my-4">
+                             {/* Glow behind ring */}
+                             <div className="absolute inset-0 bg-emerald-500/10 rounded-full blur-2xl"></div>
+                             
+                             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
+                                {/* Track */}
+                                <circle cx="100" cy="100" r="84" stroke="rgba(255,255,255,0.05)" strokeWidth="12" fill="none" />
+                                {/* Progress */}
+                                <circle 
+                                    cx="100" cy="100" r="84" 
+                                    stroke="white" 
+                                    strokeWidth="12" 
+                                    fill="none" 
+                                    strokeDasharray={2 * Math.PI * 84}
+                                    strokeDashoffset={2 * Math.PI * 84 * (1 - Math.min(1, (caloriesLeft / profile.targetCalories)))} 
+                                    strokeLinecap="round"
+                                    className="transition-all duration-1000 ease-out shadow-[0_0_10px_white]"
+                                />
+                             </svg>
+                             <div className="absolute inset-0 flex flex-col items-center justify-center pt-2">
+                                 <span className="text-5xl font-bold tracking-tighter drop-shadow-lg">{Math.max(0, caloriesLeft)}</span>
+                                 <span className="text-[10px] font-bold text-emerald-100/60 tracking-widest uppercase mt-1">Kcal Left</span>
+                             </div>
+                         </div>
+
+                         {/* Burned */}
+                         <div className="flex flex-col items-center min-w-[80px]">
+                            <span className="text-3xl font-bold tracking-tight">0</span>
+                            <span className="text-[10px] font-bold text-emerald-100/60 tracking-widest uppercase mt-1">Burned</span>
+                         </div>
+                      </div>
+
+                      {/* Divider Line */}
+                      <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent w-full mb-6"></div>
+
+                      {/* Macros Section */}
+                      <div className="grid grid-cols-3 gap-8 px-2">
+                          {/* Carbs */}
+                          <div className="flex flex-col gap-3">
+                              <span className="text-[10px] font-bold text-emerald-100/60 tracking-widest uppercase text-center">Carbs</span>
+                              <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.5)]" 
+                                    style={{ width: `${Math.min(100, (todayLog.items.reduce((a,i)=>a+i.carbs,0) / profile.targetCarbs) * 100)}%` }}
+                                  ></div>
+                              </div>
+                              <span className="text-xs font-bold text-center tracking-wide">
+                                {Math.round(todayLog.items.reduce((a,i)=>a+i.carbs,0))} / {profile.targetCarbs}g
+                              </span>
+                          </div>
+
+                          {/* Protein */}
+                          <div className="flex flex-col gap-3">
+                              <span className="text-[10px] font-bold text-emerald-100/60 tracking-widest uppercase text-center">Protein</span>
+                              <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.5)]" 
+                                    style={{ width: `${Math.min(100, (todayLog.items.reduce((a,i)=>a+i.protein,0) / profile.targetProtein) * 100)}%` }}
+                                  ></div>
+                              </div>
+                              <span className="text-xs font-bold text-center tracking-wide">
+                                {Math.round(todayLog.items.reduce((a,i)=>a+i.protein,0))} / {profile.targetProtein}g
+                              </span>
+                          </div>
+
+                          {/* Fat */}
+                          <div className="flex flex-col gap-3">
+                              <span className="text-[10px] font-bold text-emerald-100/60 tracking-widest uppercase text-center">Fat</span>
+                              <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.5)]" 
+                                    style={{ width: `${Math.min(100, (todayLog.items.reduce((a,i)=>a+i.fat,0) / profile.targetFat) * 100)}%` }}
+                                  ></div>
+                              </div>
+                              <span className="text-xs font-bold text-center tracking-wide">
+                                {Math.round(todayLog.items.reduce((a,i)=>a+i.fat,0))} / {profile.targetFat}g
+                              </span>
+                          </div>
+                      </div>
+                  </div>
+               </div>
+               
+               {/* Water Tracker */}
+               <WaterTracker intake={todayLog.waterIntake} onAdd={handleAddWater} />
+
+               {/* Meal Lists - Grouped */}
+               <div className="space-y-6 pb-4">
+                  {['Breakfast', 'Lunch', 'Dinner', 'Snack'].map((type, groupIdx) => {
+                     const meals = todayLog.items.filter(i => i.mealType === type);
+                     if (meals.length === 0) return null;
+
+                     return (
+                        <div key={type} className="animate-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${groupIdx * 100}ms` }}>
+                           <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">{type}</h3>
+                           <div className="space-y-3">
+                              {meals.map((item, idx) => (
+                                 <Card key={item.id} className="flex items-center gap-4 p-4 active:scale-[0.99] transition-transform dark:bg-[#1C1C1E] dark:border-gray-800 animate-slide-in-right" style={{ animationDelay: `${idx * 100}ms` }}>
+                                    <div className="w-14 h-14 bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm relative group">
+                                       {item.imageUrl ? (
+                                          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                                       ) : (
+                                          <div className="w-full h-full flex items-center justify-center text-2xl">🍽️</div>
+                                       )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                       <h4 className="font-bold text-gray-900 dark:text-white truncate">{item.name}</h4>
+                                       <div className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5 flex gap-2">
+                                          <span>{item.calories} kcal</span>
+                                          <span className="w-1 h-1 bg-gray-300 rounded-full self-center"></span>
+                                          <span>{item.protein}g protein</span>
+                                       </div>
+                                    </div>
+                                    <div className="w-8 h-8 rounded-full border border-gray-100 dark:border-gray-700 flex items-center justify-center">
+                                       <ChevronRight size={16} className="text-gray-400" />
+                                    </div>
+                                 </Card>
+                              ))}
+                           </div>
+                        </div>
+                     );
+                  })}
+                  
+                  {todayLog.items.length === 0 && (
+                     <div className="text-center py-12 opacity-60">
+                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                           <Utensils className="text-gray-400" />
+                        </div>
+                        <p className="text-gray-500 dark:text-gray-400 font-medium">No meals logged today</p>
+                        <Button 
+                           variant="ghost" 
+                           onClick={handleCameraClick}
+                           className="mt-2 text-[#007AFF] font-semibold"
+                        >
+                           Tap + to add meal
+                        </Button>
+                     </div>
+                  )}
+               </div>
+            </div>
+          </div>
+        );
+      case 'PROGRESS':
+        return <ProgressDashboard log={todayLog} profile={profile} />;
+      case 'AWARDS':
+        return <AwardsView profile={profile} />;
+      case 'PROFILE':
+        return (
+         <PremiumProfileView 
+            profile={profile} 
+            weeklyStats={consistencyHistory} 
+            onUpdate={(updated) => setProfile(updated)} // Would also update DB in real app
+            onLogout={handleLogout}
+         />
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <>
+       <Confetti active={showConfetti} />
+       
+       <AchievementUnlockModal 
+         achievement={justUnlockedAchievement} 
+         onClose={() => setJustUnlockedAchievement(null)} 
+       />
+
+       {renderView()}
+
+       {currentView !== 'AUTH' && currentView !== 'ONBOARDING' && currentView !== 'PAYWALL' && (
+         <Navigation 
+           currentView={currentView} 
+           onNavigate={setCurrentView} 
+           onCameraClick={handleCameraClick} 
+         />
+       )}
+       
+       {/* Hidden File Input for Camera */}
+       <input 
+         type="file" 
+         accept="image/*" 
+         capture="environment" 
+         ref={fileInputRef} 
+         className="hidden" 
+         onChange={handleFileChange}
+       />
+    </>
   );
 };
 
